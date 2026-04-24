@@ -39,7 +39,9 @@ The workflow commits `public/reports.json` when it changes; enable **Actions rea
 
 ### `ANTHROPIC_API_KEY is not set` in Actions
 
-Secrets must live under **Settings → Secrets and variables → Actions** (not only Codespaces or Dependabot). The name must match exactly: **`ANTHROPIC_API_KEY`**. If the value was saved empty, edit the secret and paste the key again. **Organization** secrets: open the org secret and grant this repository access. The workflow includes a **Verify ANTHROPIC_API_KEY** step that fails with a short hint if the variable is empty.
+Use **Settings → Secrets and variables → Actions → Secrets** (not Variables). The secret name must be **`ANTHROPIC_API_KEY`**. If the value was saved empty, edit and save again. **Organization** secrets: grant this repository access.
+
+If the key is stored on a **GitHub Environment** (e.g. `daily_summary`), the workflow job sets **`environment: daily_summary`** so `secrets.ANTHROPIC_API_KEY` is in scope. The **Resolve Anthropic API key for this job** step exports it to `GITHUB_ENV` for the rest of the run; if that step fails, the secret is missing or the environment name does not match.
 
 ## Field rules
 

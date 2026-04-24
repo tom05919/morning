@@ -32,15 +32,14 @@ jobs:
       - name: Install agent dependencies
         run: pip install -r agent/requirements.txt
 
-      # Pick the first non-empty Actions secret, then export to GITHUB_ENV so "Run agent" always sees ANTHROPIC_API_KEY.
-      # (Supports common alternate names if ANTHROPIC_API_KEY was mistyped.)
+      # Export to GITHUB_ENV so the value is reliably available to later steps (matches local ANTHROPIC_API_KEY).
       - name: Resolve Anthropic API key for this job
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          KEY="${_S1:-${_S2:-${_S3:-$_S4}}}"
+          KEY="${ANTHROPIC_API_KEY}"
           if [ -z "$KEY" ]; then
-            echo "::error::No Anthropic secret in scope. If ANTHROPIC_API_KEY lives on a GitHub Environment, this job must set 'environment: <that-name>' (this workflow uses daily_summary). Otherwise add a repository Actions secret ANTHROPIC_API_KEY, or org secret with repo access."
+            echo "::error::No Anthropic secret in scope. Add ANTHROPIC_API_KEY to the daily_summary environment (or repository Actions secrets). This job sets environment: daily_summary."
             exit 1
           fi
           echo "::add-mask::$KEY"
