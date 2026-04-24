@@ -1,7 +1,156 @@
 {
-  "version": 1,
-  "generatedAt": "2026-04-23T07:00:00Z",
+  "version": 2,
+  "generatedAt": "2026-04-24T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-04-24",
+      "date": "Friday, April 24, 2026",
+      "shortDate": "Apr 24",
+      "title": "Robots That Learn, Adapt, and Explain Themselves",
+      "topics": [
+        "Robotics",
+        "Embodied AI",
+        "VLA Models",
+        "Exoskeletons",
+        "Multi-Robot Systems",
+        "LLM Agents",
+        "World Models"
+      ],
+      "readTime": 14,
+      "tldr": "Today's feed is unusually rich. Three complementary themes dominate: (1) making robots safer and more explainable at every level — from surgical suturing to humanoid fighting — by grounding decisions in explicit representations; (2) closing the gap between high-level language reasoning and low-level physical control in Vision-Language-Action (VLA) models; and (3) building better data infrastructure and training pipelines so robots can be post-trained efficiently without constant real-world intervention. Hardware-specific research is light today; most evidence is software and systems-level.",
+      "sections": [
+        {
+          "heading": "Exoskeletons Get a Wrist — and It Makes a Big Difference",
+          "body": "Three related papers from the same research group dropped today on upper-limb exoskeletons (wearable robotic arm supports), and together they tell a clean story. The first paper introduces a mechanical design: a single Bowden cable — essentially a bicycle brake cable — tensioned by a coiled spring to move the wrist side-to-side (abduction-adduction) without needing a motor at the joint itself. This keeps the device light and friction-free. Simulation was used to pick the right spring stiffness, and the prototype was validated on five healthy participants.\n\nThe second paper asks the practical question: does this wrist joint actually help? Eight healthy adults and one person with ALS (a progressive motor neuron disease) used the EXOTIC2 exoskeleton on a drinking task and a scratch task, with the wrist joint either active or locked out. The results are striking — spill rate during drinking dropped from 56% to 3%, and success at the scratch task jumped from 28% to 75%.\n\nThe third paper took this into a real clinical population: people with ALS and spinal cord injury (SCI). They used a tongue-controlled 6-degree-of-freedom (DoF — meaning six independent axes of movement) version of the same exoskeleton. Results held up: spillage fell from 78% to 22%, and failed placements from 67% to 17%. Critically, users didn't find the extra joint uncomfortable — they just used it as needed for the task, not to its full range of motion.\n\nTakeaway: A single lightweight cable-driven wrist joint has outsized functional impact for people with severe motor impairments. The practical lesson is that completeness of a kinematic chain (covering the right joints) matters more than raw strength or precision."
+        },
+        {
+          "heading": "VLA Models: Fixing the Gap Between Seeing, Saying, and Doing",
+          "body": "Vision-Language-Action (VLA) models are AI systems that take camera images and natural language instructions as input and output robot actions directly. They have become the dominant paradigm in robotics research, and today's feed contains at least five papers trying to fix their known weaknesses.\n\n**How VLAs Actually Fail in the Real World.** One paper conducted a systematic audit of state-of-the-art VLAs on the BEHAVIOR1K benchmark — a suite of complex household tasks. The key finding: standard success-rate metrics hide dangerous behaviors. The models often achieve partial credit by lucky final states, not by performing tasks safely or consistently. The paper proposes new evaluation protocols that track safety violations explicitly. This is an important calibration — the field may be overstating progress.\n\n**CorridorVLA: Spatial Guardrails for Action Generation.** Standard VLAs generate actions from noise (a process called diffusion), which is flexible but doesn't naturally encode where the robot arm should go in physical space. CorridorVLA introduces sparse spatial anchors — predicted intermediate positions the action must pass through — and uses them to define a \"corridor\" of acceptable trajectories during training. Paths outside the corridor get corrective training signal; minor deviations due to contact or noise are tolerated. On the LIBERO-Plus benchmark, this improves success rates by 3–12 percentage points over baselines, with one variant reaching 83.2%.\n\n**ResVLA: Decoupling Intent from Fine Motor Control.** ResVLA attacks a deeper problem: VLAs are trained to generate entire action sequences from noise, but a robot's motion naturally has two layers — the broad intent (where am I going?) and the local dynamics (how exactly do I get there?). ResVLA uses spectral analysis (a mathematical technique that separates slow, smooth signals from fast, noisy ones) to split the motion into a low-frequency \"anchor\" capturing intent, and a high-frequency residual for fine adjustments. The generative model then only has to refine the residual on top of a deterministic anchor. The result is faster convergence, better robustness to language variation, and competitive real-world performance.\n\n**LoHo-Manip: Long-Horizon Planning with Visual Traces.** Most VLAs are good at short, single-step tasks. LoHo-Manip adds a separate Vision-Language Model (VLM) manager that watches the robot's progress and continuously re-plans the remaining steps, outputting both a language subtask sequence and a visual trace — a 2D keypoint path drawn on the image showing where to go next. The executor VLA follows the trace. When a step fails, it simply remains in the next plan. This implicit replanning avoids brittle hand-crafted recovery logic. Evaluated on a real Franka robot arm and in simulation, it shows strong gains on multi-step tasks.\n\n**VistaBot: Robustness to Camera Viewpoint Changes.** A persistent weakness of VLAs trained with a fixed camera: move the camera, and performance collapses. VistaBot adds a 4D geometry estimation step (estimating the 3D structure of the scene over time) and uses a video diffusion model to synthesize what the scene would look like from the training camera's viewpoint — even at test time when the camera has moved. This view synthesis is fused into the policy's latent representation. VistaBot improves the View Generalization Score — a new metric they introduce — by 2.6–2.8x over baseline policies."
+        },
+        {
+          "heading": "Medical Robotics Gets Its First Open Foundation Dataset",
+          "body": "One of the most infrastructurally significant papers today introduces Open-H-Embodiment, described as the largest open dataset of medical robot video with synchronized kinematics (joint position and velocity data recorded alongside video). It spans more than 49 institutions and covers multiple surgical robots including the da Vinci, the CMR Versius, Moon Surgical Maestro, and others, across surgical manipulation, robotic ultrasound, and endoscopy.\n\nThe dataset enables two demonstrated results. GR00T-H is the first open foundation VLA model for medical robotics — a Vision-Language-Action model trained specifically on surgical data. It is the only evaluated model to complete an end-to-end suturing benchmark (25% of trials, compared to 0% for all other models tested), and achieves 64% average success across a 29-step suturing sequence.\n\nThe second system, Cosmos-H-Surgical-Simulator, is an action-conditioned world model — a model that, given an action, can predict what the scene will look like next. It supports nine different robot platforms from a single trained checkpoint, enabling synthetic data generation and in-simulation policy testing without physical robots.\n\nThis matters because medical robotics has long suffered from exactly the data fragmentation problem that held back general robotics a decade ago: small, proprietary, single-platform datasets. Open-H-Embodiment is positioning itself as the equivalent of ImageNet for surgical robotics."
+        },
+        {
+          "heading": "Post-Training Without Constant Real-World Robot Time",
+          "body": "A recurring frustration in robotics is that improving a deployed robot policy requires running it in the real world, which is slow, expensive, and requires a human to supervise every failure. Two papers today address this from complementary angles.\n\n**Hi-WM: Human Corrections Inside a World Model.** Hi-WM proposes using a learned world model — a neural network that can simulate what will happen when the robot takes an action — as a substrate for human correction. Instead of physically running the robot until it fails, a human watches the robot fail inside the world model simulation, jumps in to provide a corrective action, and the system rolls out the corrected trajectory. The world model supports rollback (going back to a failure state) and branching (trying multiple corrections from the same state), yielding dense training signal from rare failures. Real-world success improved by 37.9 percentage points over the base policy on average, and world-model evaluation correlated strongly with real performance (r = 0.953 — very high). The key insight: world models aren't just for imagination or data augmentation; they can be interactive correction environments.\n\n**RLFP: Foundation Models as Reward Designers.** The updated Reinforcement Learning with Foundation Priors (RLFP) paper (now at version 5) takes a different angle: use foundation models — large pretrained models — not to generate actions but to provide reward signals and value estimates that guide RL exploration. This eliminates the need for hand-crafted reward functions, one of RL's most time-consuming bottlenecks. On five real dexterous manipulation tasks, the system achieved 86% average success after one hour of real-time learning. In simulation, it hit 100% success on 7 out of 8 tasks in under 100,000 environment steps."
+        },
+        {
+          "heading": "Humanoid Robots: Weightlessness, Fighting, and Wheel-Leg Hybrids",
+          "body": "Three hardware-facing papers today push the envelope of what humanoid and hybrid robots can physically do.\n\n**Learning Weightlessness.** When a human sits down, they don't rigidly track a trajectory — they relax certain joints and let the chair handle the rest. Existing humanoid control methods mostly ignore this, leading to stiff, unnatural contact with the environment. The \"Learn Weightlessness\" paper introduces a system that automatically labels moments in motion capture data when a joint should go passive (the \"weightless\" state), then trains a Weightlessness Mechanism (WM) that dynamically decides which joints to relax and by how much during contact-rich motions like sitting, lying down, or leaning against a wall. Tested on the Unitree G1 humanoid across chairs of varying heights and beds of varying inclinations, the approach generalizes well without task-specific tuning.\n\n**Humanoid Fighting with Smooth Skill Transitions.** Making a humanoid robot perform a punch, a kick, and then a defensive block in sequence is hard because each motion has a different starting and ending body posture — the \"seam\" between skills is where falls happen. RPG (Robust Policy Gating) trains a unified policy using motion transition randomization (randomly varying the starting state of each skill during training) and temporal randomization (varying when transitions occur). The result is a system that can perform arbitrary-duration combat sequences on the Unitree G1 robot without instability at transitions.\n\n**X2-N: Wheels and Legs in One Body.** X2-N is a robot that can operate as a humanoid (walking on legs with flat feet) or as a wheel-legged robot (rolling on wheels), and can transform between the two by reconfiguring its joints. It also has a full upper body with arms for manipulation. A reinforcement learning whole-body controller handles locomotion, transformation, and arm control in a unified framework. Validated on stair climbing, skating-like motion, and package delivery — an unusual combination that demonstrates genuine versatility."
+        },
+        {
+          "heading": "LLM Agents: Skill Banks, Governance, and Long-Horizon Reasoning",
+          "body": "Outside of robotics, two AI agent papers stand out.\n\n**COSPLAY: LLM Agents That Build and Reuse Skills.** COSPLAY addresses a genuine weakness of LLM-based agents: they process each episode from scratch, without a persistent memory of what worked before. COSPLAY introduces a co-evolution loop: an LLM decision agent retrieves skills from a learnable skill bank to guide its actions; a separate skill pipeline watches the agent's trajectories and extracts reusable skill primitives from them, updating the bank. Both improve together over time. Across six game environments, an 8B-parameter base model achieves 25.1% average reward improvement over four much larger frontier LLM baselines on single-player benchmarks. The efficiency gain from structured skill reuse is substantial.\n\n**Defensibility Index: Escaping the Agreement Trap.** Content moderation and rule-governed AI systems are typically evaluated by how often they agree with human-labeled examples. This paper argues that in rule-governed environments, this is fundamentally wrong: multiple decisions can be logically valid under a policy, so disagreement doesn't mean error. The authors introduce the Defensibility Index (DI) — measuring whether a decision is logically derivable from the governing rules — and the Probabilistic Defensibility Signal (PDS), estimated from the token probability distributions of an LLM auditor without additional inference passes. Validated on 193,000+ Reddit moderation decisions, they find a 33–47 percentage-point gap between agreement-based and policy-grounded metrics. 79–80% of apparent model errors were actually policy-valid decisions. A practical governance gate built on these signals achieves 78.6% automation coverage with 64.9% risk reduction."
+        },
+        {
+          "heading": "The Common Thread: Explicit Representations as the Bridge",
+          "body": "At first glance, today's papers span wildly different domains — wrist exoskeletons, surgical robots, humanoid fighting, LLM content moderation, UAV landing, and off-road driving. But there is a single idea running through nearly all of them: the value of making internal representations explicit and interpretable, rather than letting everything remain hidden inside neural network weights.\n\nCorridorVLA makes spatial constraints explicit as trajectory corridors. ResVLA makes intent explicit as a low-frequency anchor. LoHo-Manip makes planning state explicit as a visual trace and subtask list. Hi-WM makes failure states explicit and reusable inside a world model. eSEC-LAM makes manipulation understanding explicit as symbolic predicates. The Defensibility Index makes policy reasoning explicit as a logical derivation. The wrist exoskeleton papers make a mechanical insight explicit: the missing joint was the bottleneck, and adding it explicitly changes outcomes dramatically.\n\nThe overarching trend is a maturation of the field away from pure end-to-end black-box learning toward hybrid systems that combine the pattern-matching power of large neural models with explicit structure — whether spatial, temporal, logical, or mechanical. This is not a retreat from deep learning; it is a recognition that explicit structure makes systems more data-efficient, more robust, safer, and easier to correct.\n\nLooking forward, the natural next step is automatic discovery of what structure to make explicit — systems that learn not just from data but learn which aspects of their own behavior are worth representing symbolically or geometrically. The skill bank in COSPLAY, the weightlessness labeling in the humanoid paper, and the spectral decomposition in ResVLA are all early steps in that direction. Expect this hybrid explicit-implicit design pattern to become the dominant paradigm in embodied AI over the next two to three years."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Design, Modelling and Experimental Evaluation of a Tendon-driven Wrist Abduction-Adduction Mechanism for an upper limb exoskeleton",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "A Tendon-Driven Wrist Abduction-Adduction Joint Improves Performance of a 5 DoF Upper Limb Exoskeleton",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Clinical Evaluation of a Tongue-Controlled Wrist Abduction-Adduction Assistance in a 6-DoF Upper-Limb Exoskeleton for Individuals with ALS and SCI",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "How VLAs (Really) Work In Open-World Environments",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CorridorVLA: Explicit Spatial Constraints for Generative Action Heads via Sparse Anchors",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "From Noise to Intent: Anchoring Generative VLA Policies with Residual Bridges",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Long-Horizon Manipulation via Trace-Conditioned VLA Planning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "VistaBot: View-Robust Robot Manipulation via Spatiotemporal-Aware View Synthesis",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Open-H-Embodiment: A Large-Scale Dataset for Enabling Foundation Models in Medical Robotics",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Hi-WM: Human-in-the-World-Model for Scalable Robot Post-Training",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Reinforcement Learning with Foundation Priors: Let the Embodied Agent Efficiently Learn on Its Own",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Learn Weightlessness: Imitate Non-Self-Stabilizing Motions on Humanoid Robot",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "RPG: Robust Policy Gating for Smooth Multi-Skill Transitions in Humanoid Fighting",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "X2-N: A Transformable Wheel-legged Humanoid Robot with Dual-mode Locomotion and Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "FingerViP: Learning Real-World Dexterous Manipulation with Fingertip Visual Perception",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Co-Evolving LLM Decision and Skill Bank Agents for Long-Horizon Tasks",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Escaping the Agreement Trap: Defensibility Signals for Evaluating Rule-Governed AI",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Neuro-Symbolic Manipulation Understanding with Enriched Semantic Event Chains",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "A Survey of Legged Robotics in Non-Inertial Environments: Past, Present, and Future",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "MISTY: High-Throughput Motion Planning via Mixer-based Single-step Drifting",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-04-23",
       "date": "Thursday, April 23, 2026",
