@@ -17,6 +17,8 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    # Required so secrets stored on the GitHub Environment "daily_summary" are exposed to this job.
+    environment: daily_summary
     defaults:
       run:
         working-directory: personal-knowldge-website
@@ -30,22 +32,29 @@ jobs:
       - name: Install agent dependencies
         run: pip install -r agent/requirements.txt
 
-      # Fails fast with a clear message if the secret is missing, misnamed, or not granted (org secrets).
-      - name: Verify ANTHROPIC_API_KEY is available
+      # Pick the first non-empty Actions secret, then export to GITHUB_ENV so "Run agent" always sees ANTHROPIC_API_KEY.
+      # (Supports common alternate names if ANTHROPIC_API_KEY was mistyped.)
+      - name: Resolve Anthropic API key for this job
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -z "${ANTHROPIC_API_KEY}" ]; then
-            echo "::error::ANTHROPIC_API_KEY is empty. Create a repository Actions secret named exactly ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions). If you use an organization secret, grant access to this repo."
+          KEY="${_S1:-${_S2:-${_S3:-$_S4}}}"
+          if [ -z "$KEY" ]; then
+            echo "::error::No Anthropic secret in scope. If ANTHROPIC_API_KEY lives on a GitHub Environment, this job must set 'environment: <that-name>' (this workflow uses daily_summary). Otherwise add a repository Actions secret ANTHROPIC_API_KEY, or org secret with repo access."
             exit 1
           fi
-          echo "ANTHROPIC_API_KEY is set (length ${#ANTHROPIC_API_KEY})"
+          echo "::add-mask::$KEY"
+          {
+            echo "ANTHROPIC_API_KEY<<ANTHROPIC_KEY_DELIM_V1"
+            printf '%s\n' "$KEY"
+            echo "ANTHROPIC_KEY_DELIM_V1"
+          } >> "$GITHUB_ENV"
+          echo "Resolved Anthropic credential (length ${#KEY})"
 
       # Manual "Run workflow" = no hour gate (so you can test anytime).
       # Scheduled cron = --require-local-hour 8 in agent/config.yaml timezone (saves API calls).
       - name: Run agent
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
         run: |
