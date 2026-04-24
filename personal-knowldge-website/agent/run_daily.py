@@ -9,11 +9,16 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import os
+
 from dotenv import load_dotenv
 
 # Repo root = parent of `agent/`
 _ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(_ROOT / ".env")
+# In GitHub Actions, secrets are injected into the environment — do not load `.env`
+# (avoids a blank or stale committed `.env` masking `secrets.ANTHROPIC_API_KEY`).
+if os.environ.get("GITHUB_ACTIONS", "").lower() != "true":
+    load_dotenv(_ROOT / ".env", override=False)
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 

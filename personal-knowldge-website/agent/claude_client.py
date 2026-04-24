@@ -45,7 +45,14 @@ def generate_bundle_json(
 ) -> dict[str, Any]:
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        raise RuntimeError("ANTHROPIC_API_KEY is not set")
+        hint = ""
+        if os.environ.get("GITHUB_ACTIONS", "").lower() == "true":
+            hint = (
+                " In GitHub Actions, add repository secret ANTHROPIC_API_KEY under "
+                "Settings → Secrets and variables → Actions (exact name). "
+                "Organization secrets must be allowed for this repository."
+            )
+        raise RuntimeError("ANTHROPIC_API_KEY is not set." + hint)
 
     client = Anthropic(api_key=api_key)
     user_content = (

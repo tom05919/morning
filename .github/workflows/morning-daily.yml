@@ -30,6 +30,17 @@ jobs:
       - name: Install agent dependencies
         run: pip install -r agent/requirements.txt
 
+      # Fails fast with a clear message if the secret is missing, misnamed, or not granted (org secrets).
+      - name: Verify ANTHROPIC_API_KEY is available
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY}" ]; then
+            echo "::error::ANTHROPIC_API_KEY is empty. Create a repository Actions secret named exactly ANTHROPIC_API_KEY (Settings → Secrets and variables → Actions). If you use an organization secret, grant access to this repo."
+            exit 1
+          fi
+          echo "ANTHROPIC_API_KEY is set (length ${#ANTHROPIC_API_KEY})"
+
       # Manual "Run workflow" = no hour gate (so you can test anytime).
       # Scheduled cron = --require-local-hour 8 in agent/config.yaml timezone (saves API calls).
       - name: Run agent

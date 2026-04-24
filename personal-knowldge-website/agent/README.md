@@ -37,6 +37,10 @@ Repository secrets:
 
 The workflow commits `public/reports.json` when it changes; enable **Actions read/write** permissions or use a PAT with `contents: write` if your org restricts the default `GITHUB_TOKEN`.
 
+### `ANTHROPIC_API_KEY is not set` in Actions
+
+Secrets must live under **Settings → Secrets and variables → Actions** (not only Codespaces or Dependabot). The name must match exactly: **`ANTHROPIC_API_KEY`**. If the value was saved empty, edit the secret and paste the key again. **Organization** secrets: open the org secret and grant this repository access. The workflow includes a **Verify ANTHROPIC_API_KEY** step that fails with a short hint if the variable is empty.
+
 ## Field rules
 
 - **`reports`**: newest first. Each run prepends **one** new report and drops older duplicates by `id`.
