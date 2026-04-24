@@ -10,6 +10,20 @@ from anthropic import Anthropic
 
 LOG = logging.getLogger(__name__)
 
+
+def _effective_model(default: str) -> str:
+    """Use ANTHROPIC_MODEL when set and non-empty; otherwise default (e.g. from config.yaml).
+
+    GitHub Actions often sets ANTHROPIC_MODEL from vars.* which expands to an empty string
+    when unset — that still populates os.environ, so os.environ.get(..., default) would
+    wrongly pass "" to the API.
+    """
+    override = os.environ.get("ANTHROPIC_MODEL")
+    if override is not None and override.strip():
+        return override.strip()
+    return default
+
+
 SYSTEM = """You are a careful editorial assistant for a personal research digest called Morning.
 Only state facts supported by the evidence provided. If evidence is insufficient, say so clearly in the TL;DR.
 Output must be valid JSON only — no markdown, no code fences, no commentary outside the JSON object."""
@@ -69,7 +83,7 @@ def generate_bundle_json(
     )
 
     msg = client.messages.create(
-        model=os.environ.get("ANTHROPIC_MODEL", model),
+        model=_effective_model(model),
         max_tokens=max_output_tokens,
         system=SYSTEM,
         messages=[{"role": "user", "content": user_content}],
