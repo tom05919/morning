@@ -1,0 +1,1 @@
+"""Morning daily research agent."""

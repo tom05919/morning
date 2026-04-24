@@ -1,0 +1,23 @@
+timezone: America/Los_Angeles
+run_local_hour: 8
+
+model: claude-sonnet-4-6
+max_output_tokens: 8192
+context_max_chars: 72000
+
+publish_path: public/reports.json
+research_prompt_file: agent/prompts/research.md
+
+feeds:
+  - url: https://arxiv.org/rss/cs.RO
+    label: arXiv cs.RO
+  - url: https://arxiv.org/rss/cs.AI
+    label: arXiv cs.AI
+  - url: https://arxiv.org/rss/cs.LG
+    label: arXiv cs.LG
+
+search:
+  enabled: false
+  queries:
+    - robotics humanoid research news
+    - large language model agents benchmark

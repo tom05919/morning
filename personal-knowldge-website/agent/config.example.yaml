@@ -1,0 +1,33 @@
+# Copy to config.yaml and adjust. Paths are relative to repo root (parent of agent/).
+
+timezone: America/Los_Angeles
+
+# When using --require-local-hour from CI, generation runs only in this local hour
+# (first successful run that hour wins; workflow should not run more than once per hour).
+run_local_hour: 8
+
+model: claude-sonnet-4-6
+max_output_tokens: 8192
+
+# Cap evidence sent to Claude (characters, approximate).
+context_max_chars: 72000
+
+# Where to write the bundle (relative to repo root).
+publish_path: public/reports.json
+
+research_prompt_file: agent/prompts/research.md
+
+feeds:
+  - url: https://arxiv.org/rss/cs.RO
+    label: arXiv cs.RO
+  - url: https://arxiv.org/rss/cs.AI
+    label: arXiv cs.AI
+  - url: https://arxiv.org/rss/cs.LG
+    label: arXiv cs.LG
+
+search:
+  enabled: false
+  # If enabled, set BRAVE_API_KEY. Queries are fixed strings (not free-form).
+  queries:
+    - robotics humanoid news 2025
+    - large language model research announcement

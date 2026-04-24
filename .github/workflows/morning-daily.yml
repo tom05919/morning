@@ -1,0 +1,51 @@
+name: Morning daily report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Hourly at :12 UTC — combined with --require-local-hour 8 in agent timezone,
+    # only the matching local 8 AM hour triggers real work (see personal-knowldge-website/agent/README.md).
+    - cron: "12 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: morning-daily
+  cancel-in-progress: true
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: personal-knowldge-website
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install agent dependencies
+        run: pip install -r agent/requirements.txt
+
+      - name: Run agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+        run: |
+          python agent/run_daily.py --config agent/config.yaml --require-local-hour 8
+
+      - name: Commit updated reports bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/reports.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(morning): refresh reports bundle"
+            git push
+          fi

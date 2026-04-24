@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "generatedAt": "2026-04-23T07:00:00Z",
+  "reports": [
+    {
+      "id": "2026-04-23",
+      "date": "Thursday, April 23, 2026",
+      "shortDate": "Apr 23",
+      "title": "Medical robot foundation models, VLA policy analysis, and a surge in exoskeleton research",
+      "topics": [
+        "Medical Robotics",
+        "Vision-Language-Action Models",
+        "Exoskeletons",
+        "Humanoid Robots",
+        "Robot Learning"
+      ],
+      "readTime": 7,
+      "tldr": "Today's arXiv batch is unusually large and coherent. Three headline items stand out: Open-H-Embodiment introduces the largest open medical robotics dataset to date and two foundation models built on it; a critical paper dissects VLA safety and evaluation gaps in open-world benchmarks; and a cluster of exoskeleton papers provides clinical evidence that wrist abduction-adduction assistance meaningfully improves daily-living task outcomes. Humanoid control, world-model-based post-training, and improved VLA action heads round out the day.",
+      "sections": [
+        {
+          "heading": "Open-H-Embodiment: A foundation model push for medical robotics",
+          "body": "Researchers from more than 49 institutions have released Open-H-Embodiment, described as the largest open dataset of medical robotic video with synchronized kinematics. It spans seven robotic platforms including the da Vinci, Versius, MIRA, and Maestro systems, and covers surgical manipulation, robotic ultrasound, and endoscopy. Two models are demonstrated on the dataset. GR00T-H is presented as the first open vision-language-action model for medical robotics; it is the only evaluated model to achieve full end-to-end task completion on a structured suturing benchmark, completing 25% of trials versus 0% for all comparison models, and achieving 64% average success across a 29-step ex vivo suturing sequence. The second model, Cosmos-H-Surgical-Simulator, is an action-conditioned world model spanning nine robotic platforms that supports policy evaluation and synthetic data generation. The authors frame the dataset as critical research infrastructure, arguing that data fragmentation has been the primary bottleneck for foundation model development in this domain."
+        },
+        {
+          "heading": "How well do VLAs actually behave? A critical look at open-world evaluation",
+          "body": "A new analysis paper argues that standard benchmarks for vision-language-action models — including the widely used BEHAVIOR1K challenge — measure only final object states, ignoring the sequence of actions that produced them. The authors call this a 'progress-agnostic' evaluation protocol and contend it can exaggerate reported performance and obscure safety-relevant behaviors. They evaluate state-of-the-art models on B1K and assess reproducibility, consistency, safety violations, and task awareness. Their proposed evaluation protocols explicitly capture safety violations during policy execution. The paper does not claim current VLAs are unsafe in deployed products, but identifies what it characterizes as a gap between benchmark scores and the real-world deployment requirements of complex, interactive household tasks. This is a methodological critique paper; claims about specific models are based on the authors' own experiments."
+        },
+        {
+          "heading": "Wrist exoskeletons: clinical evidence accumulates",
+          "body": "Three related papers published together build a case for including wrist abduction-adduction (Ab-Ad) as an active degree of freedom in upper-limb exoskeletons. The first paper presents a tendon-driven, torsional-spring-assisted mechanism using a single Bowden cable, validated with five non-disabled participants. The second integrates the mechanism into a five-DoF exoskeleton (EXOTIC2) and tests it with eight non-disabled adults: spill incidence during a drinking task fell from 56% to 3% with wrist assistance enabled, and success on a scratch-leveling task improved from 28% to 75%. The third paper reports a within-subject clinical study with one ALS patient and five spinal cord injury patients using a tongue-controlled six-DoF version of EXOTIC2: spillage dropped from 77.8% to 22.2% and failed placements from 66.7% to 16.7%. Participants reported no increase in discomfort. Across all three studies the evidence is consistent: active wrist Ab-Ad control provides meaningful functional benefit without adding perceived burden, though sample sizes remain small and the clinical findings are preliminary."
+        },
+        {
+          "heading": "World models as corrective substrates for robot post-training",
+          "body": "Hi-WM (Human-in-the-World-Model) proposes using a learned world model as the substrate for human-guided policy correction, rather than requiring physical robot execution for each intervention. A policy is rolled out inside the world model; when failures appear, a human provides short corrective actions directly in the simulation. The framework supports rollback and branching, allowing one failure state to seed multiple corrective continuations. Evaluated on three real-world manipulation tasks across two policy backbones, Hi-WM improved real-world success by 37.9 percentage points on average over the base policy and by 19.0 points over a world-model closed-loop baseline. World-model evaluation correlated strongly with real-world performance (r = 0.953). The authors position this as evidence that world models can function as corrective tools for scalable post-training, not only as generators or evaluators."
+        },
+        {
+          "heading": "Improving VLA action heads: CorridorVLA and ResVLA",
+          "body": "Two papers propose architectural improvements to how vision-language-action models generate low-level control. CorridorVLA predicts sparse spatial anchors as incremental physical changes and uses them to define an explicit tolerance corridor in the training objective for a flow-matching action head. On the LIBERO-Plus benchmark, it improves success rate by 3.4–12.4 percentage points over SmolVLA and GR00T baselines; the GR00T-Corr variant reaches 83.21%. ResVLA takes a different approach, using spectral analysis to decompose control into a deterministic low-frequency intent and a stochastic high-frequency residual, then anchoring a residual diffusion bridge on the predicted intent. Simulation experiments show competitive performance and faster convergence than standard generative baselines, with positive real-world results also reported. Both papers address the same underlying challenge: better aligning semantic language understanding with precise physical action generation."
+        },
+        {
+          "heading": "Humanoid control: weightlessness, fighting, and wheel-leg transformation",
+          "body": "Three humanoid robotics papers address distinct control challenges. The 'Learn Weightlessness' paper observes that humans selectively relax joints during non-self-stabilizing motions — sitting, lying down, leaning — and proposes a Weightlessness Mechanism that automatically determines which joints to relax during environment contact. Tested on the Unitree G1 robot across chair, bed, and wall scenarios, the method generalizes across varying configurations without task-specific tuning. RPG (Robust Policy Gating) targets dynamic multi-skill fighting on humanoids, using motion transition randomization and temporal randomization to train a policy that transitions smoothly between fighting skills and locomotion; real-world experiments on the Unitree G1 are reported. X2-N presents a transformable wheel-legged humanoid that can switch between wheeled and legged modes via joint reconfiguration, controlled by a reinforcement learning whole-body framework validated in skating, stair-climbing, and package delivery tasks."
+        },
+        {
+          "heading": "Other signals worth noting",
+          "body": "Several additional papers merit brief mention. Open-H-Embodiment (covered above) also releases Cosmos-H-Surgical-Simulator as a separate contribution. The MISTY motion planner achieves single-step inference for autonomous driving trajectory generation at over 99 FPS with 10.1 ms latency, reaching state-of-the-art results on the nuPlan Test14-hard split. FingerViP embeds miniature cameras in each fingertip of a dexterous hand to overcome wrist-camera occlusion, reporting 80.8% overall success across challenging real-world tasks including retrieving objects behind an occluding curtain. A legged robotics survey specifically addresses locomotion in non-inertial environments — ships, aircraft, moving vehicles — identifying this as an underexplored area where stationary-ground assumptions break down. The COSPLAY agent framework co-evolves an LLM decision agent with a learnable skill bank for long-horizon game tasks, achieving 25.1% average reward improvement over frontier LLM baselines with an 8B model."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Open-H-Embodiment: A Large-Scale Dataset for Enabling Foundation Models in Medical Robotics",
+          "author": "arXiv:2604.21017",
+          "year": 2026
+        },
+        {
+          "title": "How VLAs (Really) Work In Open-World Environments",
+          "author": "arXiv:2604.21192",
+          "year": 2026
+        },
+        {
+          "title": "Design, Modelling and Experimental Evaluation of a Tendon-driven Wrist Abduction-Adduction Mechanism for an upper limb exoskeleton",
+          "author": "arXiv:2604.20893",
+          "year": 2026
+        },
+        {
+          "title": "A Tendon-Driven Wrist Abduction-Adduction Joint Improves Performance of a 5 DoF Upper Limb Exoskeleton",
+          "author": "arXiv:2604.20898",
+          "year": 2026
+        },
+        {
+          "title": "Clinical Evaluation of a Tongue-Controlled Wrist Abduction-Adduction Assistance in a 6-DoF Upper-Limb Exoskeleton for Individuals with ALS and SCI",
+          "author": "arXiv:2604.20967",
+          "year": 2026
+        },
+        {
+          "title": "Hi-WM: Human-in-the-World-Model for Scalable Robot Post-Training",
+          "author": "arXiv:2604.21741",
+          "year": 2026
+        },
+        {
+          "title": "CorridorVLA: Explicit Spatial Constraints for Generative Action Heads via Sparse Anchors",
+          "author": "arXiv:2604.21241",
+          "year": 2026
+        },
+        {
+          "title": "From Noise to Intent: Anchoring Generative VLA Policies with Residual Bridges",
+          "author": "arXiv:2604.21391",
+          "year": 2026
+        },
+        {
+          "title": "Learn Weightlessness: Imitate Non-Self-Stabilizing Motions on Humanoid Robot",
+          "author": "arXiv:2604.21351",
+          "year": 2026
+        },
+        {
+          "title": "RPG: Robust Policy Gating for Smooth Multi-Skill Transitions in Humanoid Fighting",
+          "author": "arXiv:2604.21355",
+          "year": 2026
+        },
+        {
+          "title": "X2-N: A Transformable Wheel-legged Humanoid Robot with Dual-mode Locomotion and Manipulation",
+          "author": "arXiv:2604.21541",
+          "year": 2026
+        },
+        {
+          "title": "MISTY: High-Throughput Motion Planning via Mixer-based Single-step Drifting",
+          "author": "arXiv:2604.21489",
+          "year": 2026
+        },
+        {
+          "title": "FingerViP: Learning Real-World Dexterous Manipulation with Fingertip Visual Perception",
+          "author": "arXiv:2604.21331",
+          "year": 2026
+        },
+        {
+          "title": "A Survey of Legged Robotics in Non-Inertial Environments: Past, Present, and Future",
+          "author": "arXiv:2604.20990",
+          "year": 2026
+        },
+        {
+          "title": "Co-Evolving LLM Decision and Skill Bank Agents for Long-Horizon Tasks",
+          "author": "arXiv:2604.20987",
+          "year": 2026
+        }
+      ]
+    }
+  ]
+}
