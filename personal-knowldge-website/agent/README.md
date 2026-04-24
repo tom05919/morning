@@ -26,7 +26,7 @@ python agent/run_daily.py --config agent/config.yaml --dry-run
 
 ## Scheduled run (GitHub Actions)
 
-Workflow [`.github/workflows/morning-daily.yml`](../../.github/workflows/morning-daily.yml) at the **git root** runs **hourly** and invokes `python agent/run_daily.py --require-local-hour 8` inside `personal-knowldge-website/`, so only the **8:00** wall-clock hour for `timezone` in `agent/config.yaml` (IANA name, e.g. `America/Los_Angeles`) performs work. If this site folder is the **only** git root, copy that YAML into `.github/workflows/` here, remove `defaults.run.working-directory`, and use paths without the `personal-knowldge-website/` prefix.
+Workflow [`.github/workflows/morning-daily.yml`](../../.github/workflows/morning-daily.yml) at the **git root** runs **hourly** on a cron. **Scheduled** runs use `--require-local-hour 8` so real work only happens in the **8:00** hour for `timezone` in `agent/config.yaml`. **Manual** “Run workflow” runs omit that flag so you can test anytime. If this site folder is the **only** git root, copy that YAML into `.github/workflows/` here, remove `defaults.run.working-directory`, and fix paths.
 
 Repository secrets:
 
