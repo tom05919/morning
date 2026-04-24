@@ -30,13 +30,19 @@ jobs:
       - name: Install agent dependencies
         run: pip install -r agent/requirements.txt
 
+      # Manual "Run workflow" = no hour gate (so you can test anytime).
+      # Scheduled cron = --require-local-hour 8 in agent/config.yaml timezone (saves API calls).
       - name: Run agent
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
         run: |
-          python agent/run_daily.py --config agent/config.yaml
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            python agent/run_daily.py --config agent/config.yaml
+          else
+            python agent/run_daily.py --config agent/config.yaml --require-local-hour 8
+          fi
 
       - name: Commit updated reports bundle
         run: |
