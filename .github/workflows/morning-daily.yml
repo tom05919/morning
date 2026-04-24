@@ -36,7 +36,7 @@ jobs:
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
         run: |
-          python agent/run_daily.py --config agent/config.yaml --require-local-hour 8
+          python agent/run_daily.py --config agent/config.yaml
 
       - name: Commit updated reports bundle
         run: |
