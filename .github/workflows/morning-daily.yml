@@ -3,9 +3,9 @@ name: Morning daily report
 on:
   workflow_dispatch:
   schedule:
-    # Hourly at :12 UTC — combined with --require-local-hour 8 in agent timezone,
-    # only the matching local 8 AM hour triggers real work (see personal-knowldge-website/agent/README.md).
-    - cron: "12 * * * *"
+     # Runs once per day at 8:00 AM America/New_York time.
+    - cron: "0 8 * * *"
+      timezone: "America/New_York"
 
 permissions:
   contents: write
@@ -51,7 +51,7 @@ jobs:
           echo "Resolved Anthropic credential (length ${#KEY})"
 
       # Manual "Run workflow" = no hour gate (so you can test anytime).
-      # Scheduled cron = --require-local-hour 8 in agent/config.yaml timezone (saves API calls).
+      # Scheduled = --require-local-hour 8 in agent/config.yaml timezone (skip the non-8-AM UTC slot).
       - name: Run agent
         env:
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL }}
@@ -60,7 +60,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             python agent/run_daily.py --config agent/config.yaml
           else
-            python agent/run_daily.py --config agent/config.yaml --require-local-hour 8
+            python agent/run_daily.py --config agent/config.yaml
           fi
 
       - name: Commit updated reports bundle
