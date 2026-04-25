@@ -1,4 +1,4 @@
-timezone: America/Los_Angeles
+timezone: America/New_York
 run_local_hour: 8
 
 model: claude-sonnet-4-6

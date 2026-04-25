@@ -1,9 +1,9 @@
 # Copy to config.yaml and adjust. Paths are relative to repo root (parent of agent/).
 
-timezone: America/Los_Angeles
+timezone: America/New_York
 
 # When using --require-local-hour from CI, generation runs only in this local hour
-# (first successful run that hour wins; workflow should not run more than once per hour).
+# (CI uses two UTC crons so one slot matches 8 AM across EST/EDT).
 run_local_hour: 8
 
 model: claude-sonnet-4-6

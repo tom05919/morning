@@ -3,26 +3,6 @@
   "generatedAt": "2026-04-25T07:00:00Z",
   "reports": [
     {
-      "id": "2026-04-25",
-      "date": "Saturday, April 25, 2026",
-      "shortDate": "Apr 25",
-      "title": "No Evidence Available for Apr 25",
-      "topics": [],
-      "readTime": 1,
-      "tldr": "No RSS entries or search snippets were provided for today's edition. There is nothing to report on — no facts have been fabricated or inferred. Check back when the feed pipeline is running.",
-      "sections": [
-        {
-          "heading": "What Happened",
-          "body": "The evidence block supplied to the Morning editorial agent was empty — the RSS and feed section contained no entries, and no search snippets were attached. Morning's strict policy is to report only what the evidence supports, so rather than invent stories or recycle older material, this edition is intentionally left without content. If you are seeing this as a reader, it most likely means the feed-fetching pipeline did not run correctly before this report was generated."
-        },
-        {
-          "heading": "Common Thread & Trends",
-          "body": "With no evidence to analyze, no common thread can be identified today, and no trend commentary would be grounded in fact. This itself is worth noting as a meta-observation: a research digest is only as good as its sources. Robust, diverse, and timely feeds are the foundation — without them, even a well-designed editorial system produces nothing of value. That is the right behavior."
-        }
-      ],
-      "sources": []
-    },
-    {
       "id": "2026-04-24",
       "date": "Friday, April 24, 2026",
       "shortDate": "Apr 24",
