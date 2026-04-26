@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "generatedAt": "2026-04-25T07:00:00Z",
   "reports": [
     {
@@ -9,11 +9,11 @@
       "title": "No Evidence Available for This Edition",
       "topics": [],
       "readTime": 1,
-      "tldr": "No RSS entries or search snippets were provided for the April 25, 2026 edition. Without source evidence, Morning cannot responsibly report on any topics. Please check that the feed pipeline delivered content before regenerating this report.",
+      "tldr": "No RSS entries or search snippets were included in the evidence block for this edition. There is nothing to report today without fabricating facts, which Morning does not do.",
       "sections": [
         {
-          "heading": "What Happened?",
-          "body": "The evidence block supplied to the editorial agent was empty — no RSS entries, no search snippets, and no supplementary data arrived for this edition. Morning's editorial policy requires that every claim trace back to provided evidence, so rather than fabricate stories or draw on training-data knowledge, this edition is intentionally left blank. Rerun the pipeline once feeds are confirmed healthy."
+          "heading": "What Happened",
+          "body": "The evidence block provided for this edition was empty — no RSS feed entries, articles, or search snippets were attached. Morning is built on a strict policy of only reporting facts supported by provided evidence, so no stories have been written for today's digest. If you intended to include feed data, please resubmit with the evidence attached and a new report will be generated."
         }
       ],
       "sources": []
