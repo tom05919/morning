@@ -1,7 +1,27 @@
 {
-  "version": 5,
-  "generatedAt": "2026-04-25T07:00:00Z",
+  "version": 6,
+  "generatedAt": "2026-04-26T07:00:00Z",
   "reports": [
+    {
+      "id": "2026-04-26",
+      "date": "Sunday, April 26, 2026",
+      "shortDate": "Apr 26",
+      "title": "No Evidence Available for Today's Edition",
+      "topics": [],
+      "readTime": 1,
+      "tldr": "No RSS entries or search snippets were provided for this edition. There is nothing to report today that meets Morning's standard of evidence-backed claims. Check back when the feed pipeline is restored.",
+      "sections": [
+        {
+          "heading": "What Happened to Today's Feed?",
+          "body": "The evidence block supplied to the Morning editorial agent was empty — no RSS entries, article snippets, or search results were included. Morning's editorial policy is to only state facts supported by provided evidence, so rather than speculate or fabricate stories, this edition acknowledges the gap directly. If you are seeing this in production, the likely causes are a feed-fetch timeout, a misconfigured RSS source list, or a pipeline error upstream of the agent."
+        },
+        {
+          "heading": "Common Thread & Trend Commentary",
+          "body": "With no evidence to draw from, identifying a common thread across today's stories is not possible. In general, the themes Morning tracks — robotics and embodied AI, large language model (LLM) research, inference and training speedups, and hardware advances like GPUs (graphics processing units used heavily for AI training), TPUs (Google's tensor processing units), and NPUs (neural processing units found in consumer chips) — are all converging toward a single underlying pressure: doing more AI work with less energy and latency. That meta-trend is worth watching regardless of today's feed gap, and will likely dominate coverage through the rest of 2026 and into 2027."
+        }
+      ],
+      "sources": []
+    },
     {
       "id": "2026-04-25",
       "date": "Saturday, April 25, 2026",
