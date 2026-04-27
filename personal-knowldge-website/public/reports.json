@@ -1,7 +1,158 @@
 {
-  "version": 6,
-  "generatedAt": "2026-04-26T07:00:00Z",
+  "version": 7,
+  "generatedAt": "2026-04-27T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-04-27",
+      "date": "Monday, April 27, 2026",
+      "shortDate": "Apr 27",
+      "title": "Robots That Learn on the Job, Safer AI Arms, and the Quest for Scalable Evaluation",
+      "topics": [
+        "Robotics",
+        "Embodied AI",
+        "LLM Agents",
+        "Robot Safety",
+        "Multi-Robot Systems",
+        "Autonomous Vehicles",
+        "Hardware-Software Co-design"
+      ],
+      "readTime": 14,
+      "tldr": "Today's evidence is heavy on robotics research with several standout themes: making robots safer and more capable in the real world, closing the gap between simulation and deployment, and using LLMs as high-level reasoning engines inside robot control loops. Key highlights include a hybrid learning system achieving 99.4% quality on a live factory floor, a red-teaming framework exposing physical safety risks in robot AI, a world-model-based evaluation proxy that could replace expensive real-robot testing, and a closed-loop LLM framework that teaches robots new skills while weaning them off cloud AI calls. Hardware and inference acceleration appears in a methodical survey of multimodal model compression. Evidence across all these stories is strong and comes from concrete experimental results.",
+      "sections": [
+        {
+          "heading": "Robots on the Factory Floor — Learning Meets Industry",
+          "body": "One of today's most practically significant papers comes from a team that deployed a learning-based robot on a live electric-motor production line. The system, called Learning-Augmented Robotic Automation (LARA), is a hybrid: it wraps learned manipulation controllers and a neural 3D safety monitor inside the conventional scripted industrial workflow that factories already use.\n\nThe task was deformable cable insertion and soldering — previously done by human workers. With fewer than 20 minutes of real-world training data per task, the system ran continuously for over 5 hours, assembled 108 motors without physical safety fencing, and hit a 99.4% pass rate on product-level quality checks. It also matched human cycle time while making solder-joint quality more consistent.\n\nWhy does this matter? Most learning-based robot work lives in labs. Deploying it in a real production environment — with humans nearby, no safety cage, and genuine quality requirements — is a much harder bar. The fact that a small amount of real data (under 20 minutes worth) was sufficient is encouraging for the economics of adoption. This is an early but concrete proof point that learned controllers can slot into existing industrial automation without requiring a factory redesign."
+        },
+        {
+          "heading": "Safety Red Flag: VLA Models Can Be Tricked Into Causing Physical Harm",
+          "body": "Vision-Language-Action (VLA) models are the new class of robot AI that combine visual understanding, language instructions, and physical action into one neural network. Think of them as the GPT-moment for robot manipulation — they can generalize across many tasks from a single model. But today a team released RedVLA, the first systematic framework for finding physical safety vulnerabilities in these models before they are deployed.\n\nRed teaming (deliberately trying to break a system) is common in software security and increasingly in language model safety, but this is the first time it has been done for the physical behaviors of robot AI. The framework works in two stages: first it constructs a plausible risky scenario by finding where a hazard object would naturally intersect with the robot's planned movements; then it iteratively refines that scenario using gradient-free optimization (a search method that does not require knowing the internal math of the model) guided by the robot's actual trajectory.\n\nTesting six representative VLA models, RedVLA triggered unsafe physical behaviors with an Attack Success Rate (ASR) of up to 95.5% within just 10 optimization rounds. The team also released a lightweight safety guard called SimpleVLA-Guard, trained on RedVLA-generated data, to help mitigate these risks.\n\nThis is a significant finding. As VLA models move from research labs into real deployments — hospitals, warehouses, homes — the ability to systematically find and patch dangerous physical behaviors before shipping is going to be as important as software security testing."
+        },
+        {
+          "heading": "Evaluating Robot Policies Without Robots: The dWorldEval Approach",
+          "body": "Testing whether a robot policy (the neural network that decides what a robot should do) actually works requires running it in many environments across many tasks. In the real world that is expensive and slow. In simulation it is faster, but simulations are imperfect. Today's dWorldEval paper proposes a third path: use a generative world model as the evaluation environment.\n\nA world model is a neural network that has learned to predict what the world will look like after the robot takes an action — essentially a learned simulator. dWorldEval uses a discrete diffusion world model, which works by turning all inputs (camera images, language instructions, robot joint angles) into discrete tokens — small chunks of information like words in a sentence — and then using a single transformer network to denoise and predict future states. A 'progress token' is introduced that numerically tracks how close the robot is to finishing the task; when it reaches 1.0, the task is declared done.\n\nOn standard robotics benchmarks (LIBERO, RoboTwin, real-robot tasks), dWorldEval substantially outperformed previous world-model evaluation approaches. The practical implication is significant: if you can accurately predict success without running the policy on a physical robot or even a hand-crafted simulator, you dramatically cut the cost of the evaluation loop that researchers use to improve their policies."
+        },
+        {
+          "heading": "LLMs Inside the Robot: Closing the Loop on Skill Acquisition",
+          "body": "A recurring tension in robot AI is the cost of calling a large language model (LLM) in the cloud every time the robot encounters something new. It is slow, expensive, and requires a network connection. Today's paper on LLM-driven closed-loop autonomous learning addresses this directly.\n\nThe framework works like this: when a robot encounters a task it has never seen before, it consults the LLM to reason about what to do, plan data collection, and select a model to train. It then learns from actually doing the task (or watching another agent do it), trains a small local model, and stores that model for future reuse. Next time the same task appears, the robot uses its local knowledge instead of calling the cloud.\n\nThe results show average LLM calls per repeated task dropping from 1.0 to 0.2, and total execution time improving from 7.8 seconds to 6.8 seconds. These numbers are modest in absolute terms, but the principle is important: the system is building a growing library of skills that progressively replace expensive LLM calls with fast local inference. This is the right architecture for robots that need to work reliably in the real world without a permanent internet tether."
+        },
+        {
+          "heading": "VLA Models Get Better at Long Tasks: CodeGraphVLP and GazeVLA",
+          "body": "Two papers today tackle a fundamental weakness of current VLA models: they are good at short tasks where each action depends only on what the robot can currently see, but they break down on long multi-step tasks where something important might have happened earlier and is now out of view. This is called the 'non-Markovian' problem — the idea that you sometimes need memory of the past, not just a snapshot of the present.\n\nCodeGraphVLP addresses this with a hierarchical architecture. It maintains a persistent semantic graph — think of it as a continuously updated knowledge map of which objects are where and how they relate. A code-based planner (an LLM that writes executable code rather than outputting text directly) queries this graph to check task progress and issue the next sub-instruction. The VLA executor then acts on a cleaned-up view that hides irrelevant clutter. The result is better task completion on non-Markovian tasks with lower planning latency than approaches that call a vision-language model at every step.\n\nGazeVLA takes a different angle: it uses human gaze data as a bridge between human demonstrations and robot learning. Gaze naturally precedes physical action — you look at the cup before you reach for it — so gaze is a good proxy for intention. The model is pretrained on large egocentric (first-person) human video datasets to learn this gaze-intention-action relationship, then fine-tuned on a small amount of robot data. During inference it uses Chain-of-Thought reasoning: predict where attention should go, then predict the action. It outperforms strong baselines on few-shot and robustness benchmarks.\n\nBoth papers are essentially attacking the same problem from different angles: how do you give a robot the contextual memory and forward-looking intention that makes human manipulation so flexible?"
+        },
+        {
+          "heading": "Autonomous Vehicle Localization: Highways Are Hard",
+          "body": "Most autonomous vehicle (AV) localization research focuses on urban environments — intersections, pedestrians, complex signage. Highways are comparatively boring visually, which creates a different and underappreciated problem: when everything looks the same (long stretches of identical guardrails and lane markings), GPS degradation or sensor noise can quickly cause a vehicle to lose its precise position estimate.\n\nToday's paper presents a highway localization system that addresses this with a dual-likelihood LiDAR front end. LiDAR (Light Detection and Ranging) works by shooting laser pulses and measuring reflections to build a 3D point cloud of the environment. The dual-likelihood approach separately models 3D geometric structure (the shapes of objects) and 2D road-texture cues (surface markings), then combines them. A Control-EKF (Extended Kalman Filter — a standard mathematical tool for combining noisy sensor estimates) also incorporates steering and acceleration commands to reduce lag.\n\nThe system has been validated over one million kilometers of road testing and comes with a public 163 km dataset covering both urban and highway scenarios. Compared to Apollo and Autoware (two widely used open-source AV stacks), the system performs comparably on urban roads but significantly better on challenging highway clips. The dataset release is probably the most immediately useful contribution for the broader research community."
+        },
+        {
+          "heading": "Rope Manipulation and Zero-Shot Control: Wiggle and Go!",
+          "body": "Manipulating ropes and cables is notoriously difficult for robots because deformable objects do not behave like rigid bodies — their physics depend on material properties that vary between ropes and are hard to measure. The Wiggle and Go! paper introduces a two-stage framework that solves this with system identification: before trying to complete a task, the robot 'wiggles' the rope and observes how it moves. From that motion it infers the rope's physical parameters (stiffness, damping, mass distribution), then feeds those parameters into a physics-based optimization to plan the actual manipulation action.\n\nThe 'zero-shot' label here means the robot never practiced the specific task with the specific rope — it generalizes from the learned simulation prior informed by the measured parameters. The system achieves 3.55 cm average accuracy on 3D target striking in the real world, compared to 15.34 cm when rope parameters are not used. A Pearson correlation of 0.95 between predicted and real rope frequencies on unseen trajectories suggests the parameter estimation is genuinely capturing the physical behavior.\n\nThis approach generalizes to multiple manipulation tasks using the same system-identification module, which is an elegant design: one perception step, many possible downstream actions."
+        },
+        {
+          "heading": "Hardware-Software Co-Design for Multimodal AI: A Practical Toolkit",
+          "body": "A cross-posted paper today lays out a multi-layered methodology for accelerating multimodal foundation models (MFMs) — AI systems that process multiple types of input like images, text, and sensor data simultaneously. While not focused on a single breakthrough result, it is a useful survey of the current toolkit.\n\nThe techniques covered include: mixed-precision quantization (representing some numbers with fewer bits to save memory and computation, applied differently depending on the layer's sensitivity), structural pruning (removing entire neurons or attention heads that contribute little), speculative decoding (using a small fast model to draft predictions that a large model then checks, reducing total compute), model cascading (routing easy queries to small models and only escalating hard ones to large models), and operator fusion at the graph level (combining multiple mathematical operations into a single hardware-efficient step).\n\nThe paper also discusses hardware accelerator design, including an LLM-aided design approach where the language model helps generate the hardware description itself. Demonstrations on medical imaging and code generation tasks show the methodology is domain-agnostic.\n\nFor practitioners: this is less a research contribution and more a consolidated reference for the techniques that matter when you need to deploy large multimodal models on constrained hardware — the kind of hardware that will eventually end up inside robots."
+        },
+        {
+          "heading": "Emergent Self-Awareness in Continually Learning Robots",
+          "body": "This is the most philosophically interesting paper of the day, and also one of the most carefully framed. The authors ask: if a robot is continuously learning new tasks, does it develop something like a stable 'self' — an invariant core that persists across changing skills?\n\nThe experimental setup is straightforward: one robot learns a fixed task, another undergoes continual learning on variable tasks. After training, the researchers analyze the neural network structure of each robot. The continually learning robot develops a subnetwork that is significantly more stable — it changes much less than the rest of the network (p < 0.001, meaning the statistical confidence is very high). Critically, this subnetwork is also functionally important: preserving it helps the robot adapt to new tasks, while damaging it hurts performance.\n\nThe authors are careful not to over-claim: they are not asserting robots are conscious. They are proposing a principled operational definition of 'self' as the invariant portion of a cognitive system — the part that changes least while everything else adapts. The finding that this structure emerges spontaneously from continual learning (rather than being designed in) is the surprising result.\n\nThis has practical implications too: if you can identify and protect this invariant subnetwork, you might get better continual learning systems that do not forget previously learned skills — a long-standing challenge called catastrophic forgetting."
+        },
+        {
+          "heading": "Common Thread and Broader Trends",
+          "body": "Looking across today's papers, a clear thread emerges: the compression of the gap between intelligence and physical action.\n\nEvery major story today is, in some way, about making AI reasoning more tightly coupled to real physical consequences — and more accountable to them. The factory deployment paper is about learned intelligence surviving contact with real manufacturing. RedVLA is about the physical harm that bad AI reasoning can cause in the real world. dWorldEval is about predicting physical outcomes without needing physical experiments. The LLM closed-loop framework is about reducing the latency between an AI decision and a physical robot action. CodeGraphVLP and GazeVLA are about giving robot AI the memory and intention that physical multi-step tasks require.\n\nThe unexpected link: nearly every paper is grappling with what we might call the 'reality tax' — the cost, in time, safety risk, data requirements, or brittleness, that physical deployment imposes on systems that work fine in simulation or on benchmarks. Researchers are attacking this tax from multiple directions simultaneously: better simulators (dWorldEval, LeHome), better calibration between sim and real (Wiggle and Go!, Phy-GAANet), better safety mechanisms (RedVLA, SimpleVLA-Guard), and better architectures that fail more gracefully (CodeGraphVLP, OBEYED-VLA).\n\nThe broader trend is that embodied AI is entering a maturation phase. The 'does it work in the lab' question has largely been answered for a growing set of tasks. The question now is 'does it work reliably, safely, and cheaply in the real world' — and that is a fundamentally harder question that requires the whole stack, from hardware to architecture to safety evaluation, to improve together.\n\nLooking forward: expect to see safety evaluation frameworks like RedVLA become standard practice before VLA model deployment, much as software unit testing became standard practice before code ships. Expect world-model-based evaluation (dWorldEval) to significantly accelerate the research cycle by replacing expensive real-robot experiments. And expect the LLM-inside-the-robot pattern to evolve toward systems where the LLM is used sparingly — only for genuinely novel situations — while fast local models handle everything familiar. The end state of that trajectory is a robot that is mostly autonomous and occasionally asks for help, rather than one that is constantly calling home."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Learning-augmented robotic automation for real-world manufacturing",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "RedVLA: Physical Red Teaming for Vision-Language-Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "dWorldEval: Scalable Robotic Policy Evaluation via Discrete Diffusion World Model",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "An LLM-Driven Closed-Loop Autonomous Learning Framework for Robots Facing Uncovered Tasks in Open Environments",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CodeGraphVLP: Code-as-Planner Meets Semantic-Graph State for Non-Markovian Vision-Language-Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "GazeVLA: Learning Human Intention for Robotic Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Robust Localization for Autonomous Vehicles in Highway Scenes",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Wiggle and Go! System Identification for Zero-Shot Dynamic Rope Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Focus Session: Hardware and Software Techniques for Accelerating Multimodal Foundation Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Evidence of an Emergent 'Self' in Continual Robot Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Clutter-Robust Vision-Language-Action Models through Object-Centric and Geometry Grounding",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Self-Supervised Multisensory Pretraining for Contact-Rich Robot Reinforcement Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "SANDO: Safe Autonomous Trajectory Planning for Dynamic Unknown Environments",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "LeHome: A Simulation Environment for Deformable Object Manipulation in Household Scenarios",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "SNGR: Selective Non-Gaussian Refinement for Ambiguous SLAM Factor Graphs",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "MolClaw: An Autonomous Agent with Hierarchical Skills for Drug Molecule Evaluation, Screening, and Optimization",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Read the Paper, Write the Code: Agentic Reproduction of Social-Science Results",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Math Takes Two: A test for emergent mathematical reasoning in communication",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-04-26",
       "date": "Sunday, April 26, 2026",
