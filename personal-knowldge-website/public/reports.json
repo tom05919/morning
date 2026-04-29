@@ -1,7 +1,139 @@
 {
-  "version": 7,
-  "generatedAt": "2026-04-27T12:00:00Z",
+  "version": 8,
+  "generatedAt": "2026-04-29T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-04-29",
+      "date": "Wednesday, April 29, 2026",
+      "shortDate": "Apr 29",
+      "title": "Real-Time Robots, Safer Controllers, and the Bridge Between Simulation and Reality",
+      "topics": [
+        "Robotics",
+        "Embodied AI",
+        "Simulation",
+        "Safe Control",
+        "VLA Models",
+        "Dexterous Manipulation",
+        "Autonomous Driving"
+      ],
+      "readTime": 12,
+      "tldr": "Today's evidence is heavy on robotics — specifically on closing the gap between research and deployable systems. Key themes: making motion generation and policy execution fast enough to run on real hardware in real time, making control provably safe from camera images, and building better simulators so we can train without expensive real-world data. LLM/hardware research is thin today; one notable AI paper shows power-law data distributions beat uniform ones for compositional reasoning.",
+      "sections": [
+        {
+          "heading": "⚡ MotionBricks: 15,000 Frames Per Second Motion Generation for Robots and Games",
+          "body": "One of the most practically impressive papers today is MotionBricks, which attacks a problem anyone who has tried to deploy generative AI on a real product knows well: your beautiful research model is too slow and too rigid for production use.\n\nThe team built a modular latent generative backbone — think of it as a motion library where each 'brick' is a reusable building block of movement — that can model over 350,000 motion clips with a single unified model. The key wins are:\n\n• **Speed**: 15,000 frames per second (FPS) throughput with only 2 milliseconds of latency. For context, a smooth animation needs 30–60 FPS; this system is hundreds of times faster, leaving plenty of headroom for other computation.\n• **Control**: Rather than just accepting a text prompt ('walk forward'), the system accepts velocity commands, style tags, and precise keyframe targets simultaneously — the kind of multi-modal control real applications need.\n• **Plug-and-play**: New motion behaviors can be added without retraining the whole model, like swapping LEGO bricks.\n\nCritically, they deployed the same framework on a Unitree G1 humanoid robot, showing it can drive real-time robotic control — not just game characters. This is a rare paper that honestly addresses the research-to-production gap rather than just claiming a benchmark win."
+        },
+        {
+          "heading": "🎮 DiscreteRTC: 'Thinking While Acting' Gets a Cleaner Solution",
+          "body": "Physical robots face a timing problem chatbots don't: the world keeps moving while your AI is thinking. If a robot arm plans a 1-second action sequence and then pauses to re-plan, it misses its window. This is called the **synchronous execution problem**.\n\nThe solution researchers have been exploring is **asynchronous execution** — the robot acts on its current plan while simultaneously computing the next one, like a relay race where the baton handoff overlaps with running. A technique called Real-Time Chunking (RTC) enables this by treating the transition between action chunks as an 'inpainting' problem: fill in the gap between what you've committed to and what comes next.\n\nThe problem: the dominant policy type, called **flow-matching** (a continuous diffusion method that generates smooth action trajectories), requires ugly engineering hacks to do inpainting — it wasn't designed for it.\n\nDiscreteRTC's insight is elegant: **discrete diffusion policies** — which generate actions by iteratively 'unmasking' tokens, similar to how a masked language model fills in blanks — do inpainting natively. It's their core operation. This means:\n\n• Zero extra lines of code for async inpainting.\n• Only 0.7× the compute of generating from scratch (30% cheaper).\n• 50% higher success rate on a real-world dynamic pick task versus the flow-matching baseline.\n\nThis is a good example of matching the right tool to the problem rather than forcing a continuous method into a discrete-natured task."
+        },
+        {
+          "heading": "🔒 VISION-SLS: Safety Guarantees from Raw Camera Pixels",
+          "body": "Getting a robot to move safely using only camera images is hard for a reason that goes beyond just perception accuracy: even if your vision system is good on average, it makes occasional errors, and a single error can cause a collision or constraint violation. Most learned controllers have no formal guarantee about this.\n\nVISION-SLS proposes a two-part architecture that provides **provable safety guarantees** — meaning mathematically certified bounds on constraint satisfaction — even under sensor noise and partial observability (when the camera can't see everything).\n\nHere's how it works:\n\n1. **Learned observation map with error bounds**: A neural network compresses high-resolution images (512×512 pixels) into a compact low-dimensional representation, but — crucially — it also outputs a calibrated uncertainty estimate that says 'my state estimate could be off by at most this much.' This is called a state-dependent error bound.\n\n2. **System Level Synthesis (SLS) controller**: SLS is a control theory technique that, given those error bounds, designs a feedback policy that is guaranteed to keep the system within safe limits even under worst-case errors. Think of it as designing a controller that accounts for the worst your perception could do.\n\nThey validate on a 10-dimensional quadrotor, a 4D car, and a 59-dimensional humanoid — and on real hardware (a ground vehicle). The system doesn't just avoid constraints on average; it does so with calibrated probabilistic guarantees. For anyone building robots that operate near humans, this kind of certified safety is the direction the field needs to go."
+        },
+        {
+          "heading": "🤖 VLA Models Get Smarter: Libra-VLA and Privileged Foresight Distillation",
+          "body": "**Vision-Language-Action (VLA) models** are the current frontier of generalist robot control — they take camera images and language instructions as input and output motor commands. Two papers today advance this space in complementary ways.\n\n**Libra-VLA** addresses a fundamental mismatch: existing VLA models try to jump directly from high-level language ('pick up the cup') to high-frequency motor commands (exact joint angles at 30Hz), which is a huge semantic leap. Libra-VLA introduces a two-level hierarchy:\n\n- A **Semantic Planner** that predicts coarse directional intent (discrete tokens: 'move toward the cup').\n- An **Action Refiner** that takes that coarse intent and generates precise high-frequency continuous motor commands.\n\nAn interesting empirical finding: performance follows an inverted-U curve as you vary how coarsely you decompose the action. Too coarse and the refiner has too much work; too fine and the planner is overloaded. There's a sweet spot where difficulty is balanced between both systems — a clean insight with real design implications.\n\nThe **asynchronous execution** design (the planner runs slower, the refiner runs faster) also dovetails nicely with today's DiscreteRTC story.\n\n**Privileged Foresight Distillation (PFD)** tackles a different question: when you train a robot policy with a world model (a component that predicts future video frames), does the future-prediction branch actually help, or is it just regularization? The authors show it provides a genuine **action-conditioned correction** — essentially, knowing what the future looks like shifts the action prediction in a measurable direction. PFD distills this correction into a small adapter on a current-frame-only policy using a teacher-student setup. At inference time, no future video is generated — just the corrected policy. The result is consistent improvement on manipulation benchmarks at negligible added latency. The conceptual reframe is valuable: future information isn't a target to predict or a regularizer to absorb; it's a compressible correction to be distilled."
+        },
+        {
+          "heading": "🏗️ Better Simulators: GS-Playground and Genie Sim 3.0",
+          "body": "Two simulator papers address a bottleneck that limits all of robotics research: collecting diverse, photorealistic training data at scale without breaking the hardware budget.\n\n**GS-Playground** combines a massively parallel physics engine with **3D Gaussian Splatting (3DGS)** rendering. 3DGS is a technique that represents scenes as clouds of 3D Gaussian blobs, each with color and opacity, enabling very fast photorealistic rendering compared to polygon-based approaches. The key achievement is 10,000 FPS at 640×480 resolution — enough to run thousands of parallel robot training environments simultaneously, each seeing photorealistic images. They also include an automated **Real2Sim** pipeline that reconstructs simulation-ready environments from real scans, reducing the manual labor of asset creation.\n\n**Genie Sim 3.0** takes a language-first approach: it uses an LLM to construct diverse simulation scenes from natural language descriptions ('a cluttered kitchen counter'), generates over 10,000 hours of synthetic training data across 200+ tasks, and uses a Vision-Language Model (VLM) for automated evaluation. Their open-source dataset demonstrates zero-shot sim-to-real transfer — policies trained purely on synthetic data that work on real robots without fine-tuning.\n\nBoth systems attack the same root problem: the more diverse and photorealistic your simulated training data, the less real-world data collection you need."
+        },
+        {
+          "heading": "🦾 Dexterous Manipulation: HANDFUL and Resource-Aware Grasping",
+          "body": "Most dexterous manipulation research optimizes for a single task: pick up object A. HANDFUL points out that real-world tasks are sequential — pick up object A, then use your remaining fingers to press button B, all while holding A. This requires **resource-aware grasping**: choosing a grasp for object A that conserves fingers for the next action.\n\nThe framework models finger usage as a limited resource (like memory or compute budget) and uses curriculum learning to first find grasps that leave fingers free, then train the downstream task. They introduce a simulation benchmark (HANDFUL-Bench) with tasks involving pushing, pulling, and pressing after an initial grasp, and validate on a real LEAP dexterous hand.\n\nThe core insight — that your grasp strategy should anticipate future needs, not just optimize the immediate pick — is obvious in retrospect but surprisingly underexplored in the literature."
+        },
+        {
+          "heading": "🚗 Autonomous Driving: ProDrive's World Model Planning",
+          "body": "ProDrive addresses a structural limitation in end-to-end autonomous driving: most planners look at the current frame and generate a trajectory, with no ability to reason about how their actions will change the environment around them.\n\nProDrive jointly trains a trajectory planner and a **bird's-eye-view (BEV) world model** — a component that predicts how the scene will evolve given the ego vehicle's planned trajectory. BEV means a top-down map view, which is a standard representation in autonomous driving.\n\nThe bidirectional coupling is the key: the planner generates candidate trajectories, the world model evaluates their future consequences, and that evaluation feeds back into the planner's decision. This 'what would happen if I did X?' reasoning is what allows proactive rather than purely reactive driving.\n\nResults on the NAVSIM v1 benchmark show improvements in both safety and planning efficiency over strong baselines."
+        },
+        {
+          "heading": "📊 LLM Research: Power Laws Beat Uniform Data for Compositional Reasoning",
+          "body": "One interesting AI paper today challenges a common intuition about training data curation. The intuition: since rare skills appear infrequently in natural language data (following a **power-law distribution** — a few things appear very often, most things appear rarely), you should upsample rare skills to a **uniform distribution** so the model sees them equally.\n\nThe finding: for **compositional reasoning tasks** — tasks that require combining multiple skills, like multi-step arithmetic or state tracking — training under a power-law distribution consistently outperforms uniform distribution.\n\nThe theoretical explanation is illuminating: power-law sampling creates a **beneficial asymmetry** in the loss landscape. The model first masters high-frequency skill combinations (which appear often and are easier), and those become a scaffold for efficiently learning rare, long-tail skills. Uniform sampling forces the model to learn everything simultaneously, which makes optimization harder.\n\nFor practitioners: this suggests that aggressive deduplication or upsampling of rare examples in your training data may actually hurt compositional reasoning, even when it improves raw coverage of rare facts. The structure of natural data may be a feature, not a bug."
+        },
+        {
+          "heading": "🧵 The Common Thread: The Latency-Safety-Generalization Triangle",
+          "body": "Step back from today's individual papers and a single tension appears in almost every one: **you can have speed, safety, or generalization — but making progress on all three simultaneously is the hard problem of embodied AI in 2026.**\n\n• MotionBricks and DiscreteRTC attack **latency** — getting policies fast enough to run in real time without sacrificing quality.\n• VISION-SLS and Libra-VLA attack **safety and robustness** — making policies that degrade gracefully under uncertainty.\n• GS-Playground, Genie Sim 3.0, and RISE attack **generalization** — making policies that transfer from simulation to the real world and improve without expensive real data.\n• HANDFUL, Libra-VLA, and ProDrive attack **task complexity** — moving from single-step, single-modal tasks to sequential, multi-modal, long-horizon ones.\n\nThe deeper common thread is that every paper is addressing the **sim-to-real, research-to-production gap** from a different angle. Whether it's faster inference (MotionBricks), better simulators (GS-Playground), safer controllers (VISION-SLS), or smarter hierarchical action decomposition (Libra-VLA), the goal is the same: close the distance between what works in the lab and what works on a deployed robot in a real environment.\n\n**The unexpected link**: the power-law paper about LLM training data is actually making the same argument as the robotics papers — that the structure naturally present in data (or in motion, or in tasks) is a resource to be exploited, not a problem to be corrected. MotionBricks keeps modular structure in its motion library; Libra-VLA preserves hierarchical structure in action space; the power-law paper shows preserving distributional structure in training data improves learning. The field is learning that imposing uniformity — whether on robot actions, training data, or sensor coverage — often destroys information that was doing useful work.\n\n**Forward look**: The convergence of fast photorealistic simulators (10,000+ FPS), hierarchical VLA architectures, and certified safe controllers suggests the next 12–18 months will see the first genuinely deployable generalist robot manipulation systems — not just demo-quality, but ones with formal safety properties and self-improvement loops that don't require daily human resets. The remaining hard problem is long-horizon task planning in open-ended environments, which papers like ANCHOR and ProDrive are beginning to chip away at."
+        }
+      ],
+      "sources": [
+        {
+          "title": "MotionBricks: Scalable Real-Time Motions with Modular Latent Generative Model and Smart Primitives",
+          "author": "arXiv:2604.24833",
+          "year": 2026
+        },
+        {
+          "title": "VISION-SLS: Safe Perception-Based Control from Learned Visual Representations via System Level Synthesis",
+          "author": "arXiv:2604.24894",
+          "year": 2026
+        },
+        {
+          "title": "DiscreteRTC: Discrete Diffusion Policies are Natural Asynchronous Executors",
+          "author": "arXiv:2604.25050",
+          "year": 2026
+        },
+        {
+          "title": "Libra-VLA: Achieving Learning Equilibrium via Asynchronous Coarse-to-Fine Dual-System",
+          "author": "arXiv:2604.24921",
+          "year": 2026
+        },
+        {
+          "title": "Privileged Foresight Distillation: Zero-Cost Future Correction for World Action Models",
+          "author": "arXiv:2604.25859",
+          "year": 2026
+        },
+        {
+          "title": "GS-Playground: A High-Throughput Photorealistic Simulator for Vision-Informed Robot Learning",
+          "author": "arXiv:2604.25459",
+          "year": 2026
+        },
+        {
+          "title": "Genie Sim 3.0: A High-Fidelity Comprehensive Simulation Platform for Humanoid Robot",
+          "author": "arXiv:2601.02078",
+          "year": 2026
+        },
+        {
+          "title": "HANDFUL: Sequential Grasp-Conditioned Dexterous Manipulation with Resource Awareness",
+          "author": "arXiv:2604.25126",
+          "year": 2026
+        },
+        {
+          "title": "ProDrive: Proactive Planning for Autonomous Driving via Ego-Environment Co-Evolution",
+          "author": "arXiv:2604.25329",
+          "year": 2026
+        },
+        {
+          "title": "ANCHOR: A Physically Grounded Closed-Loop Framework for Robust Home-Service Mobile Manipulation",
+          "author": "arXiv:2604.25323",
+          "year": 2026
+        },
+        {
+          "title": "RISE: Self-Improving Robot Policy with Compositional World Model",
+          "author": "arXiv:2602.11075",
+          "year": 2026
+        },
+        {
+          "title": "MiMo-Embodied: X-Embodied Foundation Model Technical Report",
+          "author": "arXiv:2511.16518",
+          "year": 2026
+        },
+        {
+          "title": "The Power of Power Law: Asymmetry Enables Compositional Reasoning",
+          "author": "arXiv:2604.22951",
+          "year": 2026
+        },
+        {
+          "title": "asRoBallet: Closing the Sim2Real Gap via Friction-Aware Reinforcement Learning for Underactuated Spherical Dynamics",
+          "author": "arXiv:2604.24916",
+          "year": 2026
+        },
+        {
+          "title": "InCoM: Intent-Driven Perception and Structured Coordination for Mobile Manipulation",
+          "author": "arXiv:2602.23024",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-04-27",
       "date": "Monday, April 27, 2026",
