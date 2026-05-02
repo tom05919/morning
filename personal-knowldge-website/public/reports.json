@@ -1,7 +1,23 @@
 {
-  "version": 9,
-  "generatedAt": "2026-04-30T12:00:00Z",
+  "version": 10,
+  "generatedAt": "2026-05-02T07:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-02",
+      "date": "Saturday, May 2, 2026",
+      "shortDate": "May 2",
+      "title": "No Evidence Available for Today's Edition",
+      "topics": [],
+      "readTime": 1,
+      "tldr": "No RSS entries or search snippets were supplied in today's evidence block. Morning cannot responsibly report on stories it has not seen. Check back once the feed pipeline is restored.",
+      "sections": [
+        {
+          "heading": "What Happened",
+          "body": "The evidence block for this edition was empty — the RSS and feed section contained no entries. Morning's editorial policy is to report only facts supported by the provided evidence, so no stories can be summarised today. This is a pipeline or configuration issue rather than a slow news day. Once the feed data is flowing again, reports will resume as normal."
+        }
+      ],
+      "sources": []
+    },
     {
       "id": "2026-04-30",
       "date": "Thursday, April 30, 2026",
