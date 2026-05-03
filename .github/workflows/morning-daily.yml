@@ -3,9 +3,8 @@ name: Morning daily report
 on:
   workflow_dispatch:
   schedule:
-     # Runs once per day at 8:00 AM America/New_York time.
+    # Runs once per day at 8:00 AM UTC.
     - cron: "0 8 * * *"
-      timezone: "America/New_York"
 
 permissions:
   contents: write
@@ -19,9 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     # Required so secrets stored on the GitHub Environment "daily_summary" are exposed to this job.
     environment: daily_summary
-    defaults:
-      run:
-        working-directory: personal-knowldge-website
     steps:
       - uses: actions/checkout@v4
 
