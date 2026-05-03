@@ -1,7 +1,27 @@
 {
-  "version": 10,
-  "generatedAt": "2026-05-02T07:00:00Z",
+  "version": 11,
+  "generatedAt": "2026-05-03T08:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-03",
+      "date": "Sunday, May 3, 2026",
+      "shortDate": "May 3",
+      "title": "No Evidence, No Report",
+      "topics": [],
+      "readTime": 1,
+      "tldr": "The evidence block for this edition is empty — no RSS entries or search snippets were provided. There is nothing to report today without fabricating information, which Morning does not do. Check back when the feed pipeline is healthy.",
+      "sections": [
+        {
+          "heading": "What Happened",
+          "body": "The evidence block supplied to the Morning editorial agent contained no RSS entries, no search snippets, and no other source material for the edition dated May 3, 2026. Morning's strict policy is to report only facts supported by the provided evidence. With an empty evidence block there are no facts to support, so no topic summaries, trend analyses, or common-thread sections can be produced honestly."
+        },
+        {
+          "heading": "What To Do",
+          "body": "If you are the operator: verify that the RSS feed fetcher and any search-snippet enrichment steps ran successfully before invoking the agent. Re-run the pipeline once feeds are available and pass the populated evidence block back to the agent. If you are a reader: this is a pipeline hiccup, not a story. Today's digest will appear once the evidence is restored."
+        }
+      ],
+      "sources": []
+    },
     {
       "id": "2026-05-02",
       "date": "Saturday, May 2, 2026",
