@@ -1,7 +1,191 @@
 {
-  "version": 11,
-  "generatedAt": "2026-05-03T08:00:00Z",
+  "version": 12,
+  "generatedAt": "2026-05-05T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-05",
+      "date": "Tuesday, May 5, 2026",
+      "shortDate": "May 5",
+      "title": "Smarter Robots, Safer Policies, and the Intelligence of Restraint",
+      "topics": [
+        "Robotics",
+        "VLA Models",
+        "Robot Safety",
+        "Embodied AI",
+        "LLM Agents",
+        "Swarm Robotics",
+        "Sensor Systems"
+      ],
+      "readTime": 14,
+      "tldr": "Today's feed is dominated by two converging themes: making robots smarter through better reasoning (VLA models with metacognition, adaptive test-time compute, hierarchical planning) and making them safer through principled constraint enforcement (safety filters, execution guarantees, imitation learning curation). On the agent side, agentic LLM systems are being applied to domains like oil-well drilling and social robotics, while a new framework for decentralized AI reputation management addresses a growing gap in multi-agent deployments. Hardware and architecture evidence is thin today — no major GPU/TPU/NPU announcements — but the robotics and agent research is unusually rich and coherent.",
+      "sections": [
+        {
+          "heading": "VLA Models Are Getting a Conscience",
+          "body": "Vision-Language-Action (VLA) models are the current frontier of robot control: they take camera images and natural language instructions as input and output physical actions. Think of them as the robot equivalent of a large language model that can also move its arms. The big problem with current VLA models is that they act reflexively — they pick an action quickly without stopping to think harder when a situation is genuinely tricky.\n\nThree papers today attack this from different angles:\n\n**Sentinel-VLA** introduces what the authors call 'metacognition' — a dedicated 'sentinel' module that watches the robot's own execution in real time. Most of the time the robot just acts. But when the sentinel detects an error or unusual state, it triggers a deeper reasoning process to recover. This on-demand approach avoids burning extra compute on every single step. The system also introduces a Self-Evolving Continual Learning (SECL) algorithm — essentially a way for the robot to notice the edge of its own competence, automatically collect more data there, and retrain — without forgetting what it already knows (a classic problem called 'catastrophic forgetting'). Training data spanning 44 tasks and over 2.6 million transitions was generated automatically. Real-world experiments show a 30%+ task success improvement over the strong PI0 baseline.\n\n**VLA-ATTC** takes a different but complementary angle: adaptive test-time compute (TTC). 'Test-time compute' means spending more computational effort at inference time (when the robot is actually running) rather than only during training. VLA-ATTC uses an 'uncertainty-based cognitive clutch' — when the model is uncertain, it shifts from fast reflexive execution to a slower deliberation mode. During deliberation, a novel **Relative Action Critic (RAC)** model picks the best action from several candidates by doing pairwise comparisons ('is action A better than action B?') rather than trying to assign an absolute score to each candidate. Pairwise comparison is a much easier learning problem. On the LIBERO-LONG benchmark, this cuts the failure rate of the state-of-the-art PI0.5 model by over 50%.\n\n**Anticipation-VLA** addresses the challenge of long-horizon tasks — sequences of many steps where small errors compound. It introduces an 'Anticipation Model' that recursively generates future subgoals and adjusts them as the task evolves, rather than fixing a plan upfront. This is paired with a goal-conditioned low-level policy that executes each subgoal. The key insight is adaptivity: the planner keeps revising its picture of what the future should look like as reality unfolds.\n\nTaken together, these three papers represent a clear design philosophy emerging in the field: VLA models need both fast reflexes and the ability to slow down and think — just like humans."
+        },
+        {
+          "heading": "Robot Safety Gets Principled (Finally)",
+          "body": "A striking theme today is the volume and quality of work on robot safety — specifically, making policies that come with mathematical guarantees rather than just hoping they work.\n\n**TAIL-Safe** addresses a known failure mode of diffusion and flow-matching policies (popular generative approaches to robot control): they are extremely sensitive to starting conditions and can drift disastrously from their training distribution. TAIL-Safe identifies a 'safe set' — a region in the robot's state space from which the policy is empirically known to succeed. It uses a Lipschitz-continuous Q-value function (a function that scores how safe a state-action pair is, and that can't change too abruptly — the 'Lipschitz' constraint ensures smoothness). When the robot is about to leave the safe set, a recovery mechanism derived from **Nagumo's theorem** (a classical result in control theory about keeping a system inside a region) uses gradient ascent to steer it back. Crucially, failure data for training this function is collected in a digital twin built with **Gaussian Splatting** — a modern 3D scene reconstruction technique — so no physical hardware is harmed during data collection.\n\n**'To Do or Not to Do'** proposes a complementary concept called 'execution guarantee': rather than always attempting a task and hoping for the best, the policy can decide upfront whether to even try based on whether it is within the safe region. This is philosophically important: a robot that wisely refuses to act in an unsafe state is safer than one that always tries and sometimes fails badly. The paper also shows that a recovery policy (a by-product of the safety analysis) can actually improve overall performance, suggesting that safety and capability are not fundamentally at odds.\n\n**Online Safety Filter for Deformable Object Manipulation** tackles a harder sub-problem: safety for robots manipulating fluids, cloth, and soft objects. These systems are governed by partial differential equations (PDEs) — equations describing how the material deforms over time — which are expensive to simulate. The paper uses a 'horizon-agnostic neural operator' (a neural network that learns the input-output behavior of the PDE without caring how many steps ahead it needs to look) combined with a Control Barrier Function (CBF) — a mathematical tool that certifies a control input is safe. The resulting safety check reduces to a small quadratic optimization problem solvable in real time, improving safe trajectory rates by up to 22% over unfiltered baselines.\n\n**Value Functions for Temporal Logic** addresses a subtle but important bug: when you train a robot with a 'reach this goal, avoid that obstacle' specification, the greedy policy derived from the optimal Q-function can actually defer completing the task indefinitely — it learns to stay safe forever without ever finishing. The paper constructs non-Markovian policies (policies that remember history, not just the current state) that provably avoid this pathology for a rich class of temporal logic specifications. Temporal logic is a formal language for expressing things like 'eventually reach the goal', 'always avoid the obstacle', and 'keep doing X until Y happens'."
+        },
+        {
+          "heading": "Imitation Learning Data Quality: The Unglamorous Bottleneck",
+          "body": "Several papers today attack a practical but underappreciated problem: most imitation learning assumes you have clean, expert demonstrations. In reality, you often have messy data from non-expert users.\n\n**GiB (Good-in-Bad)** proposes an algorithm that does not discard entire demonstrations just because they contain some mistakes. Instead, it identifies and removes bad *subtasks* within a demonstration while preserving the good parts. It trains a self-supervised model to learn latent features of motion, then uses the Mahalanobis distance (a statistical measure of how unusual a data point is relative to a learned distribution) to flag poor-quality segments. This is validated on a Franka robot in multi-step tasks.\n\n**Power Spectral Density (PSD) as a Data Quality Metric** takes an even simpler and more scalable approach. The key insight: high-quality robot demonstrations are smooth, meaning their motion trajectories have energy concentrated at low frequencies. Bad demonstrations (full of corrections, oscillations, jerky movements) have high-frequency content. By computing the PSD (a signal processing tool that decomposes a signal into its frequency components) of a demonstration trajectory, you get a fast, automatic, no-rollout-required quality score. Lower PSD = smoother = better. The metric is validated on benchmark datasets and in a user study with older adults at a retirement facility, where it was used to curate fine-tuning data for the PI0.5 model.\n\n**A Principled Approach for High-Fidelity Synthetic Demonstrations** uses 3D Gaussian Splatting to generate diverse training data from a single expert demonstration. The key argument is that existing synthesis methods deviate too far from the expert's trajectory — which is fine for simple tasks but destroys performance on contact-rich manipulation. The proposed system uses Dynamic Movement Primitives (DMPs) — a classical technique for representing and transforming motion trajectories in a shape-preserving way — to retarget the expert path to new goals and configurations while keeping the motion style intact. An obstacle-aware extension handles cluttered scenes."
+        },
+        {
+          "heading": "Efficient Robot Policies: Doing More With Less",
+          "body": "**Hydra-DP3 (HDP3)** is a standout efficiency result. Diffusion-based robot policies are powerful but slow: they require many denoising steps (analogous to how image diffusion models generate images by iteratively refining noise) and large model architectures borrowed from image generation. HDP3 points out that robot action trajectories are much simpler than images — most of the useful information is in low-frequency components (slow, smooth movements). By working in the frequency domain using the Discrete Cosine Transform (DCT, the same transform used in JPEG compression), the authors show that denoising error saturates after very few steps, meaning you don't need many denoising iterations. The result is a policy with fewer than 1% of the parameters of prior 3D diffusion policies that achieves state-of-the-art performance across four benchmarks with substantially lower inference latency. This is the kind of principled efficiency gain — rooted in understanding the structure of the problem — that tends to be durable.\n\n**Dynamics Distillation (Sim2Sim2Sim)** addresses a different efficiency problem: training reinforcement learning policies for autonomous driving requires both physical realism and the ability to run millions of simulations cheaply. High-fidelity simulators are realistic but slow; fast simulators are cheap but inaccurate. The proposed 'Sim2Sim2Sim' framework distills the dynamics of a high-fidelity simulator into a learned model that can be run in massively parallel fashion, trains the control policy inside this fast learned simulator, and then deploys back into the high-fidelity source. An interesting secondary finding: predictive accuracy of the learned dynamics model alone does not fully predict how good the resulting policies will be — the model's suitability as a training environment also matters."
+        },
+        {
+          "heading": "Agentic LLM Systems in the Wild",
+          "body": "**TADI (Tool-Augmented Drilling Intelligence)** is a concrete, deployed example of an agentic LLM system applied to industrial operations. It manages oil-well drilling data from the Equinor Volve Field: 1,759 daily drilling reports, over 15,000 production records, and real-time sensor data. Twelve domain-specialized tools are orchestrated by an LLM using iterative function calling — the LLM decides which tool to call next based on partial results, building up evidence step by step. The paper proposes the Evidence Grounding Score (EGS) as a metric for how well the agent's answers are anchored in actual data. A key finding: domain-specialized tool design matters more than raw model scale. This echoes a broader trend — careful tool and prompt engineering often outperforms simply using a bigger model.\n\n**ARIS (Agentic and Relationship Intelligence System)** brings agentic AI to social robotics. The system maintains a 'Social World Model' — a knowledge graph (a structured database of relationships between entities) that tracks who the robot has talked to, what their relationships are with each other, and how those relationships have evolved. Combined with Retrieval-Augmented Generation (RAG) — a technique where the model looks up relevant information from a database before generating a response, keeping context fresh without exploding memory usage — ARIS maintains consistent, relevant conversations even as dialogue histories grow to thousands of exchanges. Evaluated on the Pepper robot in a user study (N=23), ARIS significantly outperforms a plain LLM baseline on perceived intelligence, likeability, and anthropomorphism.\n\n**AgentReputation** proposes a framework for the emerging problem of decentralized AI agent marketplaces — scenarios where many AI agents perform tasks (debugging code, security auditing, etc.) for other agents or humans without central oversight. How do you know which agents to trust? The paper proposes a three-layer architecture separating task execution, reputation scoring, and tamper-proof storage, along with 'context-conditioned reputation cards' that prevent an agent's good reputation in one domain from being mistakenly applied to another. This is a conceptual/framework paper rather than an empirical one, but it identifies real and growing problems as multi-agent systems scale.\n\n**Minimal Causal Explanations for Jailbreaks (LOCA)** takes a mechanistic approach to understanding why jailbreaks — prompts that trick safety-trained LLMs into producing harmful content — work. Rather than trying to explain all jailbreaks globally, LOCA finds local, minimal explanations: the smallest set of changes to the model's internal representations that would cause it to refuse a specific successful jailbreak. It identifies these causally rather than just correlationally — meaning the identified changes actually cause refusal, not just correlate with it. LOCA achieves refusal with an average of six interpretable changes; prior global methods routinely fail even after 20. This kind of mechanistic understanding is important for building LLMs that are robustly safe as they operate more autonomously."
+        },
+        {
+          "heading": "Notable Robotics Engineering Results",
+          "body": "A few hardware and systems results worth flagging:\n\n**SixthSense** enables humanoid robots to estimate contact forces across their whole body using only proprioception (internal joint/torque sensors) and IMU (inertial measurement unit, essentially an accelerometer and gyroscope) data — no skin sensors or force-torque sensors required. It uses conditional flow matching (a generative modeling technique) to handle the complex, multi-modal relationship between contact inputs and motion outputs. 'Plug-and-play' means it works on top of existing locomotion policies without retraining them. This is practically significant because force-sensing skin for humanoids is expensive and fragile.\n\n**Intrinsic Dynamics Head for Quadrupedal Locomotion** trains a secondary neural network head alongside the main control policy. This 'ID Head' learns to predict joint torques from states, and its predictions are used to define a reward that encourages the policy to produce dynamically predictable behavior. Real-robot results show 16.8% improvement in torque efficiency, 18.6% improvement in action rate (smoother commands), and 12.8% reduction in mechanical power — all without sacrificing locomotion performance.\n\n**Phone2Act** lowers the barrier to VLA data collection dramatically by turning a commodity smartphone into a 6-DoF (six degrees of freedom — three translations and three rotations) robot controller via Google ARCore's augmented reality tracking. Built on ROS 2, it supports multiple robot platforms through interchangeable software bridges, records synchronized video and robot state, and exports directly to the LeRobot dataset format for immediate fine-tuning. Fine-tuning GR00T-N1.5 on 130 collected episodes achieves 90% success on a real pick-and-place task — suggesting smartphone teleoperation quality is sufficient for modern VLA training.\n\n**High-Speed Sensor Readout for Dexterous Hands** presents a shift-register-based architecture (a digital electronics technique for serializing and deserializing signals) that connects 20 sensor channels across a tendon-driven robotic hand using just three signal lines, at 1 kHz sampling rate. LSTM-based models deployed for real-time tactile force estimation achieve 93.4% accuracy for contact-location classification. This is unglamorous but important infrastructure work — dexterous hands are useless without fast, reliable sensing."
+        },
+        {
+          "heading": "The Common Thread and Broader Trends",
+          "body": "**The unexpected common thread today: the intelligence of restraint.**\n\nAt first glance, today's papers seem scattered — safety filters, VLA metacognition, data curation, agentic LLMs, efficient diffusion policies, jailbreak explanations. But look at the underlying logic across all of them:\n\n- Sentinel-VLA and VLA-ATTC both say: *don't always act maximally; know when to think harder*.\n- TAIL-Safe and 'To Do or Not to Do' say: *it is sometimes smarter not to act at all than to act unsafely*.\n- GiB and PSD-based curation say: *don't blindly use all the data you have; know which data is good*.\n- LOCA on jailbreaks says: *safety failures happen at specific, identifiable bottlenecks; targeted restraint of those bottlenecks is more effective than blunt global interventions*.\n- AgentReputation says: *don't trust all agents equally; calibrate trust to context*.\n- HDP3 says: *robot actions don't need the full expressiveness of image-generation models; restrain the architecture to match the actual structure of the problem*.\n\nThe common thread is **calibrated restraint** — the idea that intelligence is not just about doing more, but about doing the right amount at the right time in the right context. Every major theme today involves a system learning to hold back, slow down, filter, or refuse, rather than blindly maximizing throughput.\n\n**Broader trend:** The robotics and AI field is clearly moving past 'does it work at all?' toward 'does it work reliably, safely, and efficiently at scale?' The explosion of safety-focused papers, data-quality methods, and efficiency results reflects a maturing field preparing for real-world deployment. VLA models in particular are undergoing a rapid transition from research curiosities to practical systems — the volume of papers fine-tuning PI0, PI0.5, and GR00T on real hardware in a single day is striking.\n\n**Future trend to watch:** The combination of metacognitive monitoring (Sentinel-VLA), adaptive compute (VLA-ATTC), and formal safety guarantees (TAIL-Safe, CBF-based filters) is likely to converge into a single architecture: a robot that has a fast reflexive policy, a monitor that detects when to slow down, a deliberative planner that activates on demand, and a mathematical safety layer that provides hard guarantees at all times. No single paper today builds all four layers together — but the pieces are clearly being assembled."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Sentinel-VLA: A Metacognitive VLA Model with Active Status Monitoring for Dynamic Reasoning and Error Recovery",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "VLA-ATTC: Adaptive Test-Time Compute for VLA Models with Relative Action Critic Model",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Anticipation-VLA: Solving Long-Horizon Embodied Tasks via Anticipation-based Subgoal Generation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "TAIL-Safe: Task-Agnostic Safety Monitoring for Imitation Learning Policies",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "To Do or Not to Do: Ensuring the Safety of Visuomotor Policies Learned from Demonstrations",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Online Safety Filter for Deformable Object Manipulation with Horizon Agnostic Neural Operators",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Value Functions for Temporal Logic: Optimal Policies and Safety Filters",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Good in Bad (GiB): Sifting Through End-user Demonstrations for Learning a Better Policy",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "An Efficient Metric for Data Quality Measurement in Imitation Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "A Principled Approach for Creating High-fidelity Synthetic Demonstrations for Imitation Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Hydra-DP3: Frequency-Aware Right-Sizing of 3D Diffusion Policies for Visuomotor Control",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Dynamics Distillation for Efficient and Transferable Control Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "TADI: Tool-Augmented Drilling Intelligence via Agentic LLM Orchestration over Heterogeneous Wellsite Data",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "ARIS: Agentic and Relationship Intelligence System for Social Robots",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "AgentReputation: A Decentralized Agentic AI Reputation Framework",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Minimal, Local, Causal Explanations for Jailbreak Success in Large Language Models",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "SixthSense: Task-Agnostic Proprioception-Only Whole-Body Wrench Estimation for Humanoids",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Dynamics Aware Quadrupedal Locomotion via Intrinsic Dynamics Head",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Phone2Act: A Low-Cost, Hardware-Agnostic Teleoperation System for Scalable VLA Data Collection",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "High-Speed, Scalable Sensor Readout for Dexterous Robotic Hands via Shift-Register Multiplexing",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Decompose and Recompose: Reasoning New Skills from Existing Abilities for Cross-Task Robotic Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "VILAS: A VLA-Integrated Low-cost Architecture with Soft Grasping for Robotic Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "LLM-Foraging: Large Language Models for Decentralized Swarm Robot Foraging",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Action Agent: Agentic Video Generation Meets Flow-Constrained Diffusion",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "ESARBench: A Benchmark for Agentic UAV Embodied Search and Rescue",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "VOFA: Visual Object Goal Pushing with Force-Adaptive Control for Humanoids",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Cut-In Gap Acceptance Toward Autonomous vs. Human-Driven Vehicles: Evidence from the Waymo Open Motion Dataset",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-05-03",
       "date": "Sunday, May 3, 2026",
