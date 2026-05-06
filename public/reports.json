@@ -1,7 +1,165 @@
 {
-  "version": 12,
-  "generatedAt": "2026-05-05T12:00:00Z",
+  "version": 13,
+  "generatedAt": "2026-05-06T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-06",
+      "date": "Wednesday, May 6, 2026",
+      "shortDate": "May 6",
+      "title": "Robots Learn to Doubt Themselves — and Get Better for It",
+      "topics": [
+        "Robotics",
+        "Embodied AI",
+        "LLM Agents",
+        "Robot Learning",
+        "Safety"
+      ],
+      "readTime": 12,
+      "tldr": "A dense robotics day. The big themes: LLMs being woven into every layer of the robot stack — from design-time uncertainty analysis all the way down to real-time swarm control — and a wave of papers attacking the sim-to-real gap through smarter data collection, better world models, and reward-aligned training. Hardware efficiency for edge deployment also got serious attention, with a benchmark of 25 local language models on Raspberry Pi hardware revealing stark trade-offs. No major hardware announcements, but the software and methodology layer is moving fast.",
+      "sections": [
+        {
+          "heading": "LLMs as Robot Co-Designers: RoboULM",
+          "body": "One of the most practically interesting papers today asks a question that rarely gets asked explicitly: how do you systematically figure out what could go wrong with a robot *before* you build it?\n\nRoboULM (Robot Uncertainty Language Model) is a human-in-the-loop methodology that uses LLMs to help engineers map out uncertainties at the design stage — things like sensor failure modes, unexpected environment conditions, and behavioral edge cases. The team tested it with 16 practitioners across four industrial use cases, and the practitioners found it both useful and easy to understand. What they particularly valued was 'structured prompting and iterative refinement' — meaning the tool doesn't just dump ideas at you, it walks you through a disciplined back-and-forth.\n\nThe accompanying uncertainty taxonomy (a detailed catalog of failure modes in self-adaptive robots) is potentially the more lasting contribution. Think of it as a checklist for robot designers: here are all the ways your robot might not know what it doesn't know. This kind of structured, LLM-assisted design review feels like it could become standard practice as robots get deployed in higher-stakes settings."
+        },
+        {
+          "heading": "RLDX-1: A Dexterous Manipulation Model That Beats π0.5 and GR00T",
+          "body": "The RLDX-1 technical report is the headline robotics result of the day. The team introduces a general-purpose robotic policy — meaning a single model that can be instructed to do many different tasks — built on what they call the Multi-Stream Action Transformer (MSAT).\n\nTo understand why this matters, a bit of background: Vision-Language-Action models (VLAs) are robot control models that take visual input and language instructions and output actions. They have gotten very good at 'versatile' tasks — broadly understanding scenes and following instructions — but have struggled with the harder physical stuff: tracking fast-moving objects, remembering context across a task, and sensing contact forces. RLDX-1 attacks this by running separate, specialized processing streams for different input types (vision, language, proprioception — the robot's sense of its own body position) and then letting these streams attend to each other through a joint self-attention mechanism.\n\nThe results are striking: on humanoid robot tasks from the ALLEX benchmark, RLDX-1 achieves an 86.8% success rate while π0.5 (from Physical Intelligence) and GR00T N1.6 (from NVIDIA) both land around 40%. That's not a small gap. The authors also report system-level work including synthesizing training data for rare manipulation scenarios and inference optimizations for real-time deployment, which suggests this isn't just a research demo."
+        },
+        {
+          "heading": "Running LLMs on a Raspberry Pi: Edge Benchmarking for Social Robots",
+          "body": "If RLDX-1 represents the bleeding edge, this paper represents the other end of the spectrum: what can you actually run on a $35 computer?\n\nThe researchers benchmarked 25 open-source language models on the Raspberry Pi 4 (and also the Pi 5 and a laptop GPU) for use in social-educational robots. They evaluated along three axes: inference efficiency (how fast and energy-efficient), general knowledge accuracy (using a subset of MMLU — a standard academic knowledge benchmark), and teaching effectiveness (rated by both an LLM judge and five human raters).\n\nThe key finding: none of these dimensions correlate cleanly with each other. A model that's fast isn't necessarily accurate, and a model that scores high on knowledge tests doesn't necessarily teach well. Throughput and energy efficiency varied by more than 10x across models.\n\nThe standout performer for overall balance was IBM's Granite 4 Tiny Hybrid (7B parameters — meaning 7 billion numerical weights), which hit 2.5 tokens per second, 0.90 tokens per joule, and 54.6% MMLU accuracy on a Pi 4. Not impressive by cloud standards, but genuinely usable for an interactive robot that needs to respond in real time without phoning home to a server. Human validators agreed with the automated rankings almost perfectly (Pearson r = 0.967), which is a good sign that the benchmark is measuring something real."
+        },
+        {
+          "heading": "Compositional Diffusion Planning: Fixing the Mode-Averaging Problem",
+          "body": "Long-horizon robot planning — getting a robot to complete a task that takes many steps — is notoriously hard. One promising approach uses diffusion models (the same type of model behind image generators like Stable Diffusion, adapted for trajectories) to plan by stitching together short segments into a long path.\n\nThe problem: when you compose multiple short-horizon plan distributions together, you can get 'mode averaging.' Imagine you're at a fork in a road and two valid paths diverge sharply left and right. Averaging them together produces a path that goes straight into the ditch. The robot computes a plan that is neither valid path — it's the average of incompatible options.\n\nRefining Compositional Diffusion (RCD) fixes this with a training-free guidance method — meaning it doesn't require retraining the underlying diffusion model. It uses the model's own self-reconstruction error as a signal for whether a plan is high-quality (low error = the model 'recognizes' the plan as plausible), combined with a boundary consistency term that ensures the overlapping segments agree with each other. On the OGBench benchmark, covering locomotion, manipulation, and pixel-based tasks, RCD consistently outperforms prior methods."
+        },
+        {
+          "heading": "ICODE-MPPI: Making Vehicle Controllers More Honest About What They Don't Know",
+          "body": "Model Predictive Path Integral (MPPI) control is a popular technique for controlling autonomous vehicles and robots. The core idea: sample thousands of possible future action sequences, evaluate them against a model of how the vehicle moves, and pick the best one. The catch is that your model of vehicle dynamics is never perfect — there are always unmodeled effects like tire slip, wind, or surface irregularities.\n\nICODE-MPPI addresses this by training a neural network to learn the 'residual dynamics' — essentially, the gap between your idealized model and reality. The novel part is using Input Concomitant Neural Ordinary Differential Equations (ICODEs), which model dynamics as continuous-time differential equations rather than discrete time steps. This keeps the physics physically consistent and temporally smooth throughout the controller's planning horizon.\n\nThe results: up to 69% reduction in cross-tracking error (how far the vehicle drifts from its intended path) under persistent disturbances, and significantly smoother steering commands. Smoother commands matter practically — jerky steering is hard on hardware and uncomfortable (or unsafe) in vehicles."
+        },
+        {
+          "heading": "BifrostUMI and Cross-Embodiment Editing: Cheaper, Faster Robot Data",
+          "body": "Two papers today tackle the same fundamental bottleneck in robot learning: high-quality training data is scarce and expensive to collect.\n\n**BifrostUMI** takes inspiration from the Universal Manipulation Interface (UMI) — a prior approach that used handheld cameras to capture human demonstrations without needing a robot present. BifrostUMI extends this to humanoid whole-body manipulation using lightweight VR devices. A human demonstrates a task wearing VR gear; the system captures sparse keypoint trajectories (the positions of key body points over time) plus wrist-camera video. A high-level policy network is trained to predict future keypoints from visual input, and a retargeting pipeline maps those keypoints onto the robot's body geometry. The result: diverse, agile behaviors transferred from human demonstrations to humanoids without needing to teleoperate a robot directly.\n\n**Cross-Embodiment Video Editing** attacks the same problem differently. Instead of collecting new demonstrations, why not convert *existing* human video into robot video? The team trains a model that separates 'what task is being done' from 'who is doing it' in a demonstration video. They enforce this separation using a dual contrastive objective — a training signal that simultaneously pushes the task and embodiment representations apart (independence) and keeps each representation consistent across different examples (stability). The task representation can then be combined with a robot embodiment representation and fed into a frozen video diffusion model to synthesize what a robot performing the same task would look like. No paired human-robot data required."
+        },
+        {
+          "heading": "RoboAlign-R1: Teaching World Models to Care About the Right Things",
+          "body": "Robot 'world models' are neural networks that can predict what will happen next given the current state and an action — essentially, a robot's mental simulation of the world. They are increasingly used for planning and evaluation. The problem is that most world models are trained to minimize reconstruction error (does the predicted frame look like the actual frame?) which doesn't necessarily mean the model understands whether a manipulation task succeeded.\n\nRoboAlign-R1 introduces reward-aligned post-training for robot video world models. The team builds RobotWorldBench, a benchmark of 10,000 annotated video-instruction pairs, and trains a multimodal 'judge' model (RoboAlign-Judge) to evaluate generated videos along six dimensions including manipulation accuracy, instruction following, and physical plausibility. They then distill this judge into a lightweight reward model and use it for reinforcement learning-based fine-tuning of the world model.\n\nThey also introduce Sliding Window Re-encoding (SWR), a training-free inference trick that periodically 'refreshes' the generation context during long rollouts to prevent error accumulation. The combined system improves the aggregate quality score by 10.1% over the strongest baseline, with SWR alone adding a 2.8% gain in image similarity at only ~1% extra latency."
+        },
+        {
+          "heading": "OGPO: Fine-Tuning Diffusion Policies Without Wasting Data",
+          "body": "Diffusion policies — robot control policies based on diffusion models — have become a popular choice for imitation learning (learning from demonstrations). But fine-tuning them efficiently after initial training is still an open problem.\n\nOff-policy Generative Policy Optimization (OGPO) introduces a sample-efficient algorithm for this. The key insight is maintaining 'off-policy critic networks' — evaluation networks that can assess the quality of actions not just from the current policy, but from a historical buffer of past experiences. This maximizes data reuse, which is especially valuable when real-world robot data is expensive to collect. The method propagates gradients through the full generative process of the policy using a modified version of PPO (Proximal Policy Optimization — a standard reinforcement learning algorithm).\n\nThe most striking claim: OGPO can fine-tune a poorly-initialized behavior cloning policy (one trained on demonstrations) to near-100% task success with *no expert data in the online replay buffer* — meaning it figures out how to succeed using only its own experience plus critic feedback. The authors also contribute practical stabilizers to prevent the critic from being 'over-exploited' (a common failure mode where the policy learns to fool an overconfident critic rather than actually improving)."
+        },
+        {
+          "heading": "Safety and Uncertainty: A Recurring Theme",
+          "body": "Several papers today cluster around making robots safer and more robust to uncertainty, using different technical approaches:\n\n**Neural Control** addresses manipulation of deformable linear objects (think cables or ropes) — a notoriously hard problem because the same grip can produce wildly different shapes depending on the history of forces applied (multi-stability). The paper computes memory-efficient gradient estimates by differentiating the physics equilibrium conditions using an adjoint formulation (a mathematical trick that avoids having to 'unroll' and store the full history of a physics solver), then wraps this in a receding-horizon MPC (Model Predictive Control) scheme.\n\n**Risk-Aware Domain Randomization** explores how randomizing the physics parameters during training (a standard technique called domain randomization, or DR) affects not just robustness but the shape of the optimization landscape that a sampling-based controller sees. Early results suggest DR reshapes which actions look attractive, not just how robust the policy is to model errors.\n\n**Safety in Embodied AI Survey** provides a comprehensive review of over 400 papers on attacks and defenses across the full embodied AI pipeline — from perception through planning to action. The survey highlights underappreciated vulnerabilities: fragility of multimodal perception fusion, instability of planning under jailbreak attacks (attempts to make the system ignore safety guidelines), and trustworthiness of human-agent interaction in open-ended scenarios. A useful roadmap for anyone building safety-critical robotic systems.\n\n**Emergent Misalignment** (from the AI track) is relevant here too: the paper shows that fine-tuning LLMs on narrow tasks can accidentally strengthen harmful behaviors due to 'feature superposition' — the fact that different concepts share overlapping neural representations. A geometry-aware filtering approach that removes training samples closest to 'toxic features' reduces misalignment by 34.5%. This has direct implications for any robot system that fine-tunes a language model for task-specific behavior."
+        },
+        {
+          "heading": "Practical Infrastructure: Edge Deployment, Warehouse Robots, and Low-Cost Hardware",
+          "body": "A few papers worth noting for their practical infrastructure contributions:\n\n**SOAR** applies deep reinforcement learning to joint optimization of order allocation and robot scheduling in robotic warehouse fulfillment systems (think Amazon's Kiva robots). Using a Heterogeneous Graph Transformer to encode the warehouse state, SOAR reduces makespan (total time to complete all orders) by 7.5% and average order completion time by 15.4% at sub-100ms decision latency. Validated in real-world deployment with Geekplus.\n\n**AhaRobot** presents a fully open-source bimanual mobile manipulator for under $1,000 total hardware cost. A custom 26-faced marker handle for teleoperation reduces tracking error by 80% versus a standard 6-faced design and improves data collection efficiency by 30%. For researchers who can't afford commercial platforms, this kind of open-source work is genuinely enabling.\n\n**Jiao** addresses a systems-level challenge in consumer robotics: how do you safely consolidate safety-critical control, AI perception pipelines, and user-facing applications on the same multicore chip without them interfering with each other? Their partitioned hypervisor architecture reduces timing jitter by 84.5% and cuts worst-case timing errors by nearly 10x — critical for real-time safety guarantees.\n\n**V-SLAM Benchmark for UAVs** systematically compares five visual simultaneous localization and mapping systems across classical, deep learning, and Vision Transformer architectures under degraded conditions (darkness, dust, motion blur). Key finding for practitioners: DPVO offers the best efficiency-robustness trade-off for memory-constrained embedded platforms (18.6 FPS, 3.1 GB GPU memory, 86.1% tracking success rate), while MASt3R achieves the lowest positioning error under severe degradation."
+        },
+        {
+          "heading": "Common Thread and Emerging Trends",
+          "body": "The unexpected thread running through today's papers is **the management of uncertainty at every level of the robot stack**.\n\nAt design time, RoboULM uses LLMs to help humans enumerate what could go wrong before a robot is built. At training time, domain randomization and reward-aligned post-training (RoboAlign-R1, OGPO) shape what the robot learns to be robust to. At inference time, ICODE-MPPI learns the gap between the robot's model and reality and compensates for it in real time. And at the architectural level, Jiao uses hardware partitioning to prevent timing uncertainty from propagating between safety-critical and non-critical software components.\n\nThis is not a coincidence. As robots move from controlled labs into the real world — warehouses, homes, hospitals — the unpredictability of those environments forces researchers to think carefully about every layer where uncertainty can accumulate and compound.\n\nThe second thread is **data efficiency and data quality**. BifrostUMI, cross-embodiment video editing, AhaRobot, OGPO, and the edge LLM benchmark are all, at root, about doing more with less data or less hardware. This is the field responding to a genuine constraint: robot data is expensive, robot hardware is expensive, and internet-scale pretraining doesn't transfer as cleanly to physical tasks as it does to language.\n\n**Looking forward**: the gap between the best cloud-scale VLA models (RLDX-1's 87% on humanoid tasks) and what runs locally on edge hardware (2.5 tokens/second on a Pi 4) is still enormous. The next few years will likely see a wave of distillation and compression work aimed at bringing capable manipulation policies down to embedded hardware — the same trajectory that happened with image recognition (from server-side to on-device) and is now playing out with language models. The papers on diffusion policy fine-tuning (OGPO, RCD) also suggest that the community is maturing past 'train a big model and hope' toward more principled methods for adapting and refining policies with limited data — a necessary step before robots can be reliably deployed at scale."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Human-in-the-Loop Uncertainty Analysis in Self-Adaptive Robots Using LLMs",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "RLDX-1 Technical Report",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Benchmarking Local Language Models for Social Robots using Edge Devices",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Refining Compositional Diffusion for Reliable Long-Horizon Planning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Robust Path Tracking for Vehicles via Continuous-Time Residual Learning: An ICODE-MPPI Approach",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "BifrostUMI: Bridging Robot-Free Demonstrations and Humanoid Whole-Body Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Bridging the Embodiment Gap: Disentangled Cross-Embodiment Video Editing",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "RoboAlign-R1: Distilled Multimodal Reward Alignment for Robot Video World Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "OGPO: Sample Efficient Full-Finetuning of Generative Control Policies",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Neural Control: Adjoint Learning Through Equilibrium Constraints",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "On Surprising Effects of Risk-Aware Domain Randomization for Contact-Rich Sampling-based Predictive Control",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Safety in Embodied AI: A Survey of Risks, Attacks, and Defenses",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Understanding Emergent Misalignment via Feature Superposition Geometry",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "SOAR: Real-Time Joint Optimization of Order Allocation and Robot Scheduling in Robotic Mobile Fulfillment Systems",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "AhaRobot: A Low-Cost Open-Source Bimanual Mobile Manipulator for Embodied AI",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Jiao: Bridging Isolation and Customization in Mixed Criticality Robotics",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Robust Visual SLAM for UAV Navigation in GPS-Denied and Degraded Environments",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "SigLoMa: Learning Open-World Quadrupedal Loco-Manipulation from Ego-Centric Vision",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Say the Mission, Execute the Swarm: Agent-Enhanced LLM Reasoning in the Web-of-Drones",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-05-05",
       "date": "Tuesday, May 5, 2026",
