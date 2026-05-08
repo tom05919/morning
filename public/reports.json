@@ -1,7 +1,160 @@
 {
-  "version": 13,
-  "generatedAt": "2026-05-06T12:00:00Z",
+  "version": 14,
+  "generatedAt": "2026-05-08T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-08",
+      "date": "Friday, May 8, 2026",
+      "shortDate": "May 8",
+      "title": "Bridging Sim and Real: How Today's AI Research Is Closing the Gap Between Imagination and Physical Reality",
+      "topics": [
+        "Robotics",
+        "Embodied AI",
+        "LLM Agents",
+        "Sim-to-Real Transfer",
+        "World Models",
+        "VLA Models",
+        "Multi-Agent Systems"
+      ],
+      "readTime": 12,
+      "tldr": "Today's research is dominated by a single obsession: making AI systems that work in simulation actually work in the real world, and making real-world robots smarter with less data. From dexterous hand manipulation to multi-robot coordination, the field is converging on a set of shared tools — foundation models as reality critics, topology-aware coordination, and adaptive action planning — to close the gap between what robots can do in a computer and what they can do on your kitchen counter.",
+      "sections": [
+        {
+          "heading": "Dexterous Manipulation: Teaching Robots to Handle the World with Their Hands",
+          "body": "Two strong papers today tackle the notoriously hard problem of dexterous manipulation — getting robot hands to do complex, contact-rich tasks like humans do.\n\n**DexSim2Real** presents an integrated framework for bridging the 'sim-to-real gap' (the frustrating phenomenon where policies learned in simulation fall apart when deployed on real hardware). They use a vision-language model as a 'visual realism critic' — essentially asking a large AI model to look at simulated scenes and judge how realistic they look, then using that feedback to tune the simulator's parameters automatically. They also fuse tactile (touch) and visual information via a technique called cross-attention, and build a progressive skill curriculum guided by an LLM that schedules difficulty like a smart tutor. The result: a 78.2% average success rate on real-world tasks, with only an 8.3% gap between simulation and reality — a meaningful improvement over prior methods.\n\n**DexSynRefine** takes a complementary approach: instead of improving the simulator, it starts from sparse human demonstration videos (human-object interaction, or HOI data) and synthesizes physically plausible robot trajectories from them. It then uses reinforcement learning to 'physically ground' those trajectories — essentially, to make them actually obey the laws of physics rather than just look kinematically correct. A sim-to-real adaptation module then transfers the policy to hardware. Across five dexterous tasks including pick-and-place and tool use, this approach beats kinematic retargeting by 50-70 percentage points. Together, these papers show that the field is moving away from hand-crafting simulation parameters toward letting AI models do the calibration automatically."
+        },
+        {
+          "heading": "World Action Models: Robots That Imagine Before They Act",
+          "body": "A cluster of papers today centers on 'World Action Models' (WAMs) — systems that jointly predict what the world will look like in the future *and* what actions to take, like a chess player who imagines several moves ahead before committing.\n\n**FFDC (Future Forward Dynamics Causal Attention)**, introduced in the 'When to Trust Imagination' paper, addresses a subtle but important failure mode: current WAMs execute a fixed number of predicted actions after each inference, even if reality has already diverged from what was imagined. FFDC adds a lightweight 'verifier' that watches whether the robot's imagined future still matches what its cameras actually see, and replans early if not. The result on the RoboTwin benchmark is striking: 69% fewer model forward passes, 34% less execution time, and a 35% better success rate in real-world tests. This is an efficiency and robustness win at the same time.\n\n**OA-WAM** (Object-Addressable World Action Model) attacks a different WAM weakness: when you ask a robot to 'pick up the red cup,' existing WAMs represent the whole scene as a single blob of visual information, making it hard to pinpoint which object to act on when the scene changes. OA-WAM decomposes each video frame into individual 'object slots' — one per object, plus one for the robot — each with a persistent identity address and a changing content vector. This means the robot can keep track of 'which thing is which' even as objects move around. It achieves 97.8% on the LIBERO benchmark and 79.3% on SimplerEnv, matching or beating strong baselines while being much more robust to scene perturbations.\n\n**EA-WM** (Event-Aware World Model) takes a geometry-first approach: instead of injecting robot joint positions as abstract numbers, it projects actions directly into the camera's visual frame as structured 'action fields,' making the relationship between movement and vision explicit. This achieves state-of-the-art on the WorldArena benchmark.\n\n**CKT-WAM** adds a practical angle: how do you transfer knowledge *between* different WAMs without retraining everything? They compress a 'teacher' WAM's internal representations into a compact text-space context that is appended to a 'student' WAM's conditioning, achieving 86.1% success on LIBERO-Plus with only 1.17% of parameters being trainable. This is parameter-efficient transfer learning applied to world models — a genuinely useful engineering result."
+        },
+        {
+          "heading": "Vision-Language-Action (VLA) Models: Fine-Tuning Big Models for Robot Control",
+          "body": "Vision-Language-Action (VLA) models are large pretrained models — think of something like GPT-4V but also capable of outputting robot actions — that need to be adapted (fine-tuned) for specific robotic tasks without forgetting everything they already know.\n\n**VLA-GSE** (Generalized and Specialized Experts) introduces a clever fine-tuning strategy. It takes the frozen pretrained model's weight matrices and decomposes them mathematically (using something called Singular Value Decomposition, or SVD — a way to break a matrix into components ranked by importance). The most important components become 'generalized experts' shared across all tasks; the remaining components become 'specialized experts' activated only for specific tasks. This mixture-of-experts approach updates only 2.51% of total model parameters, achieves 81.2% zero-shot success on LIBERO-Plus, and preserves the model's general language-and-vision understanding. Full fine-tuning, by contrast, risks 'catastrophic forgetting' — where the robot gets better at its new task but loses its broader understanding.\n\n**TriRelVLA** approaches generalization from a representational angle. Current VLAs tend to memorize appearances — they learn that 'pick up the blue mug' means picking up *that specific blue mug* in *that specific scene*. TriRelVLA instead builds explicit relational graphs capturing how the robot hand, objects, and task requirements relate to each other. These relational structures are more transferable than raw appearance, enabling meaningful gains in cross-scene, cross-object, and cross-task generalization.\n\n**Adaptive Q-Chunking (AQC)** is a training-and-inference technique for VLAs that predict sequences of actions at once (called 'action chunks'). The insight: near a contact event (like the moment a gripper touches an object), you need short, reactive chunks; during free-space motion, longer chunks give better credit assignment for learning. AQC trains critics at multiple chunk sizes and selects the best one per state, using a normalized advantage comparison that avoids the collapse to always-short chunks that naive comparisons produce. Applied to large-scale VLA models on RoboCasa-GR1 tasks, it significantly boosts performance."
+        },
+        {
+          "heading": "Creative Reasoning and Social Intelligence in Robots",
+          "body": "Two papers push the frontier of what we expect robots to understand about their world.\n\n**Creative Robot Tool Use by Counterfactual Reasoning** asks a fascinating question: can a robot figure out that a ruler can substitute for a stick, or that a box can be used as a stepping stool, without being explicitly told? Their framework uses a Vision-Language Model (VLM) to suggest which physical features of a tool might matter (length, rigidity, flatness, etc.), then generates 'counterfactual' versions of tools — hypothetical variants with those features changed — and simulates what would happen. By discovering which features causally matter for a task, the robot can identify novel objects that share those features. The results on tool-use scenarios (reaching, scooping, stepping) show that this causal grounding leads to more reliable tool selection than baselines.\n\n**RobotEQ** introduces a benchmark for 'active intelligence' — the idea that robots in human society should not just follow instructions, but should understand what actions are *socially appropriate* even without being asked. The paper constructs a dataset of 1,900 egocentric images across 56 embodied scenario subcategories, with questions about which robot actions are permissible given social norms. Current state-of-the-art models fall short, particularly in spatial grounding. Interestingly, the paper finds that using RAG (Retrieval-Augmented Generation — where the model can look up relevant information from an external knowledge base) to incorporate social norm knowledge generally helps. This is early-stage work, but it names an important gap: robots that can only follow explicit commands will always be limited in unstructured human environments."
+        },
+        {
+          "heading": "Multi-Robot Coordination and Soft Robotics",
+          "body": "Several papers today address how groups of robots should coordinate, particularly in constrained or complex environments.\n\n**TD-MARL** (Topology-Driven Multi-Agent Reinforcement Learning) tackles anti-entanglement control for soft robots — essentially, how do you train multiple soft, flexible robots working in a cluttered space to avoid tangling their bodies together? The key innovation is a 'topological security layer' that uses topological invariants (mathematical properties that describe how things are connected and wound around each other, which remain constant under continuous deformation) to detect and mitigate entanglement risk before it happens. The centralized training / distributed execution design (each robot trains with full knowledge of others but executes independently) outperforms prior deep RL methods.\n\n**CRONA** (Cross-Modal Navigation with Multi-Agent RL) proposes using separate specialized agents for each sensory modality (e.g., one agent for vision, one for audio), then coordinating them via a centralized multi-modal critic. The finding is practical and nuanced: for short-range navigation, a single modality is often enough; for large, complex environments, you need both richer multi-modal perception and higher model capacity.\n\n**Multi-Robot Coordination in V2X Environments** presents a standards-based communication framework (building on existing automotive V2X — Vehicle-to-Everything — protocols) that enables humanoid and quadrupedal robots to coordinate in urban traffic scenarios without centralized infrastructure. The real-world demonstration of a humanoid and a quadruped cooperating to help a pedestrian cross a road is a concrete proof-of-concept for robot-augmented urban mobility."
+        },
+        {
+          "heading": "LLM Agent Systems: Uncertainty, Safety, and Smarter Questioning",
+          "body": "On the AI agents side, three papers stand out for their practical implications.\n\n**ZAYA1-8B** is a new reasoning-focused Mixture-of-Experts (MoE) language model — a type of model where only a subset of its 'expert' sub-networks are active for any given input, keeping computation efficient. With only 700 million *active* parameters out of 8 billion total, ZAYA1-8B matches or beats DeepSeek-R1-0528 on mathematics and coding benchmarks. The training pipeline is notable for including reasoning data from the very beginning of pretraining (not just as a post-training add-on) and a four-stage reinforcement learning cascade. They also introduce 'Markovian RSA,' a test-time compute method that runs multiple reasoning attempts in parallel and recursively merges them — achieving 91.9% on AIME'25 — while only carrying forward a short 'tail' of reasoning context, keeping costs bounded.\n\n**BALAR** (Bayesian Agentic Loop for Active Reasoning) addresses a real weakness in current LLM agents: when a task requires gathering information from a user over multiple turns, most systems ask questions reactively and inefficiently. BALAR treats this as a Bayesian inference problem — it maintains a probability distribution over what the 'true' state of affairs might be, selects questions that maximally reduce its uncertainty (by maximizing expected mutual information), and dynamically expands its model of the world when it discovers its current one is insufficient. No fine-tuning required. The accuracy gains over baselines are large: +14.6% on detective reasoning, +38.5% on logic puzzles, +30.5% on clinical diagnosis.\n\n**Partial Evidence Bench** highlights a subtle but dangerous failure mode in enterprise AI agents: when access controls limit what data an agent can see, the agent may still produce a confident-sounding answer even though crucial evidence was hidden from it. The benchmark tests whether agents can recognize when their evidence is incomplete and report that gap honestly, rather than silently filling it in. The finding that 'silent filtering' — just hiding the inaccessible data without telling the user — is 'catastrophically unsafe' is an important governance result for anyone deploying AI agents in regulated environments."
+        },
+        {
+          "heading": "Annotator Policy Models: Understanding Why AI Safety Raters Disagree",
+          "body": "**Annotator Policy Models (APMs)** address a foundational problem in AI safety: when human annotators (or LLM annotators) disagree about whether an AI output is 'safe,' it's often unclear *why* they disagree. Is it a misunderstanding of the instructions? Is the policy itself ambiguous? Or do people genuinely hold different values about what counts as safe?\n\nAPMs are interpretable models trained to predict individual annotators' labeling behavior from their past labels alone — no need to ask them extra questions. With >80% accuracy in modeling annotator safety policy, they can reveal systematic differences in how different people (or models) interpret the same safety guidelines, and surface demographic differences in safety priorities. This kind of tooling is practically important for AI labs trying to design more transparent, inclusive safety policies — it turns an opaque disagreement problem into a measurable one."
+        },
+        {
+          "heading": "Common Thread and Future Trends",
+          "body": "**The unexpected link tying everything together today is the 'imagination gap' — the distance between what an AI system believes will happen and what actually does.**\n\nEvery major paper today is, at its core, about closing some version of this gap:\n- DexSim2Real and DexSynRefine close the gap between simulated and real physics.\n- FFDC (adaptive WAM execution) closes the gap between a robot's imagined future and the observed present.\n- OA-WAM and EA-WM build richer internal world representations so that the imagined world is more accurate to begin with.\n- VLA-GSE and TriRelVLA close the gap between training scenes and test scenes — the generalization gap.\n- BALAR closes the gap between what an agent knows and what it needs to know, actively.\n- Partial Evidence Bench closes the gap between what an agent *can* see and what it *thinks* it can see.\n- RobotEQ closes the gap between what a robot is told to do and what it *should* do by social norms.\n\nThis convergence is not accidental. The field has largely solved 'does this work in the lab?' and is now grappling with 'does this work in the world, without perfect information, with mismatched bodies, and amid human complexity?'\n\n**Overall trend:** We are entering a phase where the bottleneck is no longer raw model capability but *calibration* — of uncertainty, of physical reality, of social context, and of the gap between training and deployment. The tools emerging to address this (foundation models as critics, topology-aware coordination, Bayesian active reasoning, adaptive action chunking) are remarkably general-purpose.\n\n**Future trend to watch:** The convergence of WAMs (robots that imagine futures) with Bayesian active reasoning (agents that know what they don't know) suggests a near-future where robots will not just execute plans, but will actively identify the specific uncertainty that most limits their success and take targeted actions to resolve it — asking a clarifying question, choosing a more informative viewpoint, or requesting a human to handle an edge case. That would be a qualitative leap in robot autonomy."
+        }
+      ],
+      "sources": [
+        {
+          "title": "DexSim2Real: Foundation Model-Guided Sim-to-Real Transfer for Generalizable Dexterous Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "DexSynRefine: Synthesizing and Refining Human-Object Interaction Motion for Physically Feasible Dexterous Robot Actions",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "When to Trust Imagination: Adaptive Action Execution for World Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "OA-WAM: Object-Addressable World Action Model for Robust Robot Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "EA-WM: Event-Aware Generative World Model with Structured Kinematic-to-Visual Action Fields",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CKT-WAM: Parameter-Efficient Context Knowledge Transfer Between World Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "VLA-GSE: Boosting Parameter-Efficient Fine-Tuning in VLA with Generalized and Specialized Experts",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "TriRelVLA: Triadic Relational Structure for Generalizable Embodied Manipulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Adaptive Q-Chunking for Offline-to-Online Reinforcement Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Creative Robot Tool Use by Counterfactual Reasoning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "RobotEQ: Transitioning from Passive Intelligence to Active Intelligence in Embodied AI",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Topology-Driven Anti-Entanglement Control for Soft Robots",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Cross-Modal Navigation with Multi-Agent Reinforcement Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Multi-Robot Coordination in V2X Environments",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "ZAYA1-8B Technical Report",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "BALAR: A Bayesian Agentic Loop for Active Reasoning",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Partial Evidence Bench: Benchmarking Authorization-Limited Evidence in Agentic Systems",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Understanding Annotator Safety Policy with Interpretability",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Toward Visually Realistic Simulation: A Benchmark for Evaluating Robot Manipulation in Simulation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Plug-and-Play Label Map Diffusion for Universal Goal-Oriented Navigation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-05-06",
       "date": "Wednesday, May 6, 2026",
