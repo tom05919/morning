@@ -1,7 +1,27 @@
 {
-  "version": 14,
-  "generatedAt": "2026-05-08T12:00:00Z",
+  "version": 15,
+  "generatedAt": "2026-05-09T07:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-09",
+      "date": "Saturday, May 9, 2026",
+      "shortDate": "May 9",
+      "title": "No Evidence Available for Today's Edition",
+      "topics": [],
+      "readTime": 1,
+      "tldr": "No RSS entries or search snippets were provided in the evidence block for this edition. Morning cannot report on stories it has not seen, so today's digest is empty. Check back once the feed pipeline is running.",
+      "sections": [
+        {
+          "heading": "What Happened?",
+          "body": "The evidence block passed to the editorial agent was completely empty — no RSS feed entries, no search snippets, no headlines. Morning is designed to report only on facts supported by provided evidence, so rather than fabricate stories or pull from training-data memory (which could be outdated or simply wrong), we are publishing this placeholder edition instead.\n\nIf you are debugging the pipeline, check that the RSS ingestion step ran successfully and that entries were injected into the prompt before it was sent to the model."
+        },
+        {
+          "heading": "Common Thread & Trend Observation",
+          "body": "With no evidence to analyze, no common thread can be identified today. As a general observation: the emphasis areas for Morning — robotics and embodied AI, LLM agent and architecture research, and hardware advances — are all converging on a single meta-trend: making capable AI systems faster, cheaper, and more physically present in the world. When the feed pipeline is restored, that lens will be applied to whatever stories emerge."
+        }
+      ],
+      "sources": []
+    },
     {
       "id": "2026-05-08",
       "date": "Friday, May 8, 2026",
