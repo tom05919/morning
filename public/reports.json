@@ -1,7 +1,31 @@
 {
-  "version": 15,
-  "generatedAt": "2026-05-09T07:00:00Z",
+  "version": 16,
+  "generatedAt": "2026-05-10T07:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-10",
+      "date": "Sunday, May 10, 2026",
+      "shortDate": "May 10",
+      "title": "No Evidence Available for Today's Edition",
+      "topics": [],
+      "readTime": 1,
+      "tldr": "No RSS entries or search snippets were supplied for the May 10 edition. There is nothing in the evidence block to report on. This is not a reflection of a quiet news day — it simply means the feed pipeline sent an empty payload. Check your RSS sources and re-run the agent with populated evidence.",
+      "sections": [
+        {
+          "heading": "What Happened",
+          "body": "The evidence block provided to the Morning editorial agent was completely empty. No RSS feed entries, no search snippets, and no supplementary links were included. Per editorial policy, Morning only reports facts supported by the evidence provided, so no stories, summaries, or trend analysis can be produced today."
+        },
+        {
+          "heading": "What To Do",
+          "body": "If you are the operator: verify that the RSS ingestion pipeline ran successfully before calling the agent. Common failure modes include feed timeout, an empty XML payload, or a misconfigured date filter that stripped all entries. Re-run the agent once the evidence block is populated and a full report will be generated."
+        },
+        {
+          "heading": "Common Thread & Overall Trend",
+          "body": "With no evidence to analyse, no common thread can be honestly identified today. In general, the areas Morning watches — robotics and embodied AI, LLM and agent systems, architecture research for faster training and inference, and hardware such as GPUs, TPUs, and NPUs — are all moving quickly, and a missed edition is worth catching up on. That context stands, but no specific trend claim is made here because none is supported by today's evidence."
+        }
+      ],
+      "sources": []
+    },
     {
       "id": "2026-05-09",
       "date": "Saturday, May 9, 2026",
