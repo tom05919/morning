@@ -1,7 +1,257 @@
 {
-  "version": 16,
-  "generatedAt": "2026-05-10T07:00:00Z",
+  "version": 17,
+  "generatedAt": "2026-05-11T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-11",
+      "date": "Monday, May 11, 2026",
+      "shortDate": "May 11",
+      "title": "Robots That Remember, Think, and Feel Their Way Through the World",
+      "topics": [
+        "Embodied AI",
+        "VLA Models",
+        "LLM Agents",
+        "Inference Efficiency",
+        "Aerial Robotics",
+        "Multi-Agent Systems",
+        "Hardware Accelerators"
+      ],
+      "readTime": 14,
+      "tldr": "A dense Monday from arXiv. The dominant theme is closing the loop between perception, memory, and action in robotic and agent systems — from tactile-reactive VLA models and cached-state LLM policies to modular Lyapunov controllers and swarm coordination via formal logic. A standout hardware entry (CARMEN) shows CORDIC-based inference engines achieving competitive efficiency on tiny silicon. No major industry announcements today; all evidence is preprint research.",
+      "sections": [
+        {
+          "heading": "Giving Robots a Sense of Touch — AT-VLA",
+          "body": "Vision-Language-Action models, or VLAs, are neural networks that read camera images and natural language instructions and output robot motor commands. They are increasingly capable but notoriously bad at tasks that require touching and feeling things carefully — inserting a peg, screwing a cap, or pressing a fragile surface with just the right force.\n\nAT-VLA (Adaptive Tactile Vision-Language-Action) attacks this problem with two ideas. First, an 'Adaptive Tactile Injection' mechanism watches the ongoing task and only feeds tactile sensor readings into the network at moments when touch data actually changes what the robot should do. This is important because adding a brand-new sensory modality at fine-tuning time — when the model was pre-trained without it — can corrupt the representations the model already learned. By injecting tactile signals selectively rather than constantly, the researchers minimize that disruption.\n\nSecond, a 'Tactile Reaction Dual-Stream' separates slow visual reasoning (which runs at low frequency, thinking about what the scene looks like and what to do next) from fast tactile control (which runs at high frequency, making tiny corrections when the robot feels unexpected resistance). The fast stream achieves closed-loop responses in 40 milliseconds. Real-world experiments on contact-rich tasks validate both ideas. The practical takeaway: touch doesn't have to be bolted onto a VLA clumsily — a careful injection strategy lets you get the benefits without breaking what already works."
+        },
+        {
+          "heading": "Solving the Memory Problem for Robot-Controlling LLMs — CSR",
+          "body": "One of the most frustrating bottlenecks when using a large language model as a robot's 'brain' is the time it takes to process the entire history of what the robot has seen and done before it can produce the next action. This delay — called TTFT, or 'time to first token' — scales badly as the history grows.\n\nThe Cached State Representation (CSR) framework addresses this head-on. The key concept it exploits is the KV-cache: modern transformers store intermediate computations (the 'key' and 'value' matrices in their attention layers) so they don't have to recompute them for tokens already seen. CSR is designed around three provably necessary properties for real-time performance — prefix stability (the cached history never changes retroactively), incremental extensibility (new observations can be appended cheaply), and asynchronous state reconciliation (old memory can be evicted in the background without stalling the main loop).\n\nOn a physical robot connected over Wi-Fi to a 235-billion-parameter model, CSR reduces TTFT from 14.67 seconds to 0.56 seconds for a 120,000-token context — a 26-fold speedup. A companion algorithm called ASR (Asynchronous State Reconciliation) handles the housekeeping of evicting old memories in a parallel thread so the main reasoning loop never hiccups. The result: a robot policy that runs at more than 2 Hz using a model that would normally be far too slow. This is a meaningful step toward LLMs as continuously running cognitive backends for robots, rather than one-shot query systems."
+        },
+        {
+          "heading": "World Action Models and the Consistency Problem — WAMs, NoiseGate, and Diagnostic Work",
+          "body": "Two papers this week push on an emerging class of models called World Action Models (WAMs). A WAM is a generative model that simultaneously imagines future video frames and outputs robot actions, tying perception, prediction, and control into one system. Think of it as a robot that plans by mentally simulating what it expects to see if it takes a given action.\n\nThe first paper ('Is the Future Compatible?') points out a gap nobody had formally studied: just because a WAM produces a visually plausible future doesn't mean that future is physically consistent with the action sequence it claims to represent. The authors introduce 'action-state consistency' as a new quality axis — does the predicted action actually cause the predicted state transition? They find this metric reliably separates successful rollouts from failed ones across many tasks and propose a 'value-free consensus' strategy: rank candidate rollouts by how much the predicted futures agree with each other, rather than by a learned reward. This improves success rates on two manipulation benchmarks without any additional training.\n\nThe second paper, NoiseGate, addresses a subtler issue inside the same WAM architecture. WAMs typically use a 'Mixture-of-Transformers' where video tokens and action tokens share attention. These tokens are denoised — noise is progressively removed, guided by a noise schedule. Current systems use one shared noise level for all predicted video frames, which implicitly treats every imagined future frame as equally trustworthy. NoiseGate instead learns a per-frame noise schedule: a small 'Gating Policy Network' dynamically raises or lowers each frame's noise level during denoising, controlling how much that frame influences action generation. Frames that are harder to predict reliably get more noise, reducing their sway over the action output. The system is trained with task-reward signals so the schedule learns what's actually useful. Results show consistent gains on diverse manipulation tasks."
+        },
+        {
+          "heading": "Smarter Data for Robot Learning — Failure Demos and Anchor-Centric Adaptation",
+          "body": "Two papers tackle the costly bottleneck of robot demonstration data from different angles.\n\nThe first asks a simple but underexplored question: can we use the failed demonstrations that inevitably accumulate during data collection, rather than discarding them? The proposed method learns a 'latent representation' — a compact numerical summary — that captures the difference between how a robot pays attention (via the attention mechanism in its neural network) during successes versus failures. During execution, the robot checks its first observation and picks the mode that matches. The paper also introduces a metric that can score each failure sample to decide whether including it in training will help or hurt — essentially a quality filter for bad data.\n\nThe second paper ('Anchor-Centric Adaptation') formalizes a trap that practitioners often fall into: when adapting a general VLA model to a specific robot with a limited data budget, the intuitive strategy is to maximize 'coverage' — collect demonstrations of as many different situations as possible. The authors show mathematically that this is often wrong. With a fixed budget, spreading demonstrations too thin means each situation has too few examples, leading to high estimation noise that overwhelms the benefit of coverage. Their solution, ACA (Anchor-Centric Adaptation), first collects repeated demonstrations at a small set of 'anchor' conditions to build a reliable policy skeleton, then strategically expands to difficult boundary cases using error mining. Real-robot experiments confirm this beats the naive diverse-sampling strategy under the same data budget."
+        },
+        {
+          "heading": "Modular Control for Flexible Robot Arms — Lie Algebra and Lyapunov",
+          "body": "This is the most mathematically dense paper of the day, but the engineering payoff is real. Flexible robot manipulators — arms with links that bend under load — are notoriously hard to control because deformation couples into every joint's dynamics in complex ways.\n\nThe proposed framework uses a mathematical language called 'screw theory' (specifically the Lie algebra se(3), which describes rigid-body motion in 3D space using 'twists' for velocities and 'wrenches' for forces/torques). The key insight is that when you write the physics this way, the interaction forces between adjacent links — which normally create complicated cross-coupling terms — cancel out exactly. This cancellation is a consequence of Newton's third law and a symmetry property of the screw-theoretic framework, not an approximation.\n\nThe result is a 'modular' controller: you can independently design a stability-guaranteeing controller (proved using Lyapunov functions — a standard tool for showing a system converges to a desired state) for each link, then compose them. The composite system is provably stable regardless of how many links the arm has, and an adaptive version learns unknown physical parameters online. The practical implication: scalable, certifiably stable control for flexible manipulators without re-deriving everything for each new arm configuration."
+        },
+        {
+          "heading": "Aerial Robotics: Pollination, Flexible Payloads, and Tiny Explorers",
+          "body": "Three UAV (unmanned aerial vehicle) papers caught our eye today.\n\nThe pollination drone integrates RGBD perception (color plus depth cameras), MPPI control (a sampling-based method that optimizes trajectories by evaluating many random perturbations in parallel), and a two-degree-of-freedom arm to precisely position an end effector near flowers in vertical farms. The system achieves centimeter-level accuracy in both simulation and real experiments and is designed to eventually carry contactless acoustic pollen-delivery modules — no physical flower contact needed.\n\nAirBender solves a different problem: two drones collaboratively carrying a bendable (elastic) object through the air. The challenge is that the object's deformation properties are unknown and change depending on its shape at any moment. Their adaptive controller learns the effective stiffness on the fly using Lyapunov-based analysis, without needing a model of the material. Hardware experiments in several scenarios validate stability.\n\nFinally, a palm-sized UAV (11 cm wheelbase, 400 grams) demonstrates autonomous exploration using only multi-fisheye cameras — no LiDAR. Instead of maintaining dense 3D maps (memory-intensive and compute-heavy), the system uses a sparse topological graph of key nodes. 'Frontiers' — the boundary between known and unknown space — are represented as nodes rather than explicit surfaces, slashing memory and compute requirements while still enabling efficient exploration."
+        },
+        {
+          "heading": "LLM Agents: Swarm Control, Graph Reasoning, and a Hidden Bias in Long Reasoning Chains",
+          "body": "Several papers address LLMs operating as agents or in multi-agent settings.\n\nCommandSwarm generates XML behavior trees — structured programs that encode swarm robot behaviors — directly from natural-language voice or text commands. The pipeline combines a fine-tuned 10-billion-parameter LLM (fine-tuned using LoRA, a technique that adapts a large model by training only a small set of additional parameters), safety filtering, and a deterministic parser that rejects malformed outputs. Fine-tuning jumps zero-shot BLEU (a text similarity score) from 0.267 to 0.663 and syntactic validity from 0% to 72%, demonstrating that compact, domain-adapted models can be practically useful for swarm control when embedded in a validated pipeline.\n\nThe temporal-logic swarm paper ('Melding LLM and temporal logic') takes a more formal approach: mission rules are encoded as temporal logic formulas, and an LLM generates action sequences that are guaranteed to satisfy those formulas. An uncertainty-aware scheduler then assigns tasks across heterogeneous robots while an event-triggered protocol limits how often human operators need to intervene.\n\nGraphDC proposes a divide-and-conquer multi-agent framework for graph algorithm problems — tasks like shortest path, connectivity, etc. — which LLMs handle poorly on large inputs. The system decomposes a graph into subgraphs, assigns each to a specialized agent, and merges results with a master agent. Performance improves especially on large instances where direct end-to-end reasoning collapses.\n\nPerhaps the most cautionary finding today: a careful study of position bias in reasoning models ('More Thinking, More Bias') finds that models doing longer chain-of-thought reasoning actually become *more* biased toward specific answer positions in multiple-choice questions, not less. Across 13 model configurations and multiple benchmarks, 12 show a positive correlation between reasoning trajectory length and position bias. The intuition is that longer chains of thought accumulate small positional preferences that compound. Models only escape this at very large scale (671B parameters), and even then the longest reasoning quartile shows elevated bias. This is a meaningful warning for anyone using reasoning models for evaluation pipelines."
+        },
+        {
+          "heading": "Hardware: CORDIC-Based Inference Engine CARMEN",
+          "body": "CARMEN is a hardware accelerator (a specialized chip design) for running deep learning inference — the step where a trained neural network makes predictions. The central idea is using CORDIC (Coordinate Rotation Digital Computer), an algorithm that computes mathematical functions like multiply-accumulate operations through iterative bit-shifts and additions, requiring no multipliers — which are expensive in silicon area and power.\n\nThe innovation is that CORDIC's 'iteration depth' (how many steps it runs) directly controls numerical precision. By dynamically adjusting iteration depth at runtime, CARMEN can switch between approximate (fast, lower power) and accurate (slower, higher precision) computation on the fly without changing the hardware. A 256-processing-element configuration in 28nm CMOS (a standard chip fabrication process) achieves 4.83 TOPS per square millimeter (TOPS = trillions of operations per second, a standard throughput metric) and 11.67 TOPS per watt. On an FPGA (a reconfigurable chip used for prototyping), it achieves real-time object detection at 154.6ms latency drawing only 0.43 watts. This is not a flagship GPU beater, but the efficiency-per-area and dynamic precision capability make it relevant for edge robotics — devices that need to run inference on tight power budgets without a data center connection."
+        },
+        {
+          "heading": "Autonomous Driving: Radar-Only Localization, V2X Security, and Unified Data",
+          "body": "Three autonomous driving papers are worth noting.\n\nDr-BA (Direct Radar Bundle Adjustment) is the first system to perform bundle adjustment — jointly estimating a map and sensor poses from multiple sensor readings simultaneously — directly on raw 2D spinning radar images rather than first extracting sparse point clouds. Radar is immune to rain, fog, and snow where cameras and LiDAR fail. By using full radar intensity images, Dr-BA builds denser maps and achieves state-of-the-art radar-based localization across more than 200 km of driving data. The code is public.\n\nMORPH-U studies what happens when you try to use Vehicle-to-Everything (V2X) communication — messages from roadside infrastructure warning cars of hazards — in an adversarial setting. Messages can be delayed, dropped, or forged. Their system adds a 'Byzantine-inspired acceptance gate' (a concept from distributed computing for tolerating faulty or malicious nodes) that requires a quorum of messages to agree and allows an onboard sensor to veto implausible reports. This prevents the planner from being hijacked by fake hazard alerts.\n\n123D is an open-source data unification framework that consolidates eight real-world driving datasets spanning 3,300 hours and 90,000 kilometers under a single API, treating each sensor modality as an independent timestamped event stream. This allows synchronous or asynchronous access and cross-dataset training without complex format conversions."
+        },
+        {
+          "heading": "Embodied AI at Scale: HumanNet and 1 Million Hours of Human Video",
+          "body": "A compelling data-infrastructure paper proposes that the bottleneck for robot learning isn't robot data — it's human data. HumanNet is a one-million-hour corpus of human-centric video (both first-person and third-person perspectives) annotated with interaction-centric signals: captions, motion descriptions, hand and body signals. The hypothesis is that watching humans interact with the world — grasping tools, following procedures, navigating spaces — provides a richer and cheaper training signal than collecting robot demonstrations.\n\nThe validation experiment is striking: continuing to train the Qwen vision-language model on just 1,000 hours of egocentric video from HumanNet outperforms continuing to train on 100 hours of real robot data from a dedicated robot dataset. This suggests human egocentric video could substitute for expensive robot demonstrations at scale. The curation pipeline — which treats human-centric filtering, temporal structuring, viewpoint diversity, and annotation quality as first-class design concerns — is itself a contribution, turning raw internet video into a substrate for embodied learning."
+        },
+        {
+          "heading": "Common Thread and Trend Analysis",
+          "body": "**The unexpected common thread today is the problem of context decay — and how every subfield is solving it differently.**\n\nThink about what 'context' means in each paper: for a robot arm controller, it's the accumulated deformation state of every link; for an LLM robot policy, it's the entire history of observations stored in a KV-cache; for a WAM, it's the imagined future the model holds in working memory; for a swarm, it's the shared belief state among agents; for a data-collection pipeline, it's the coverage of all the situations a robot might encounter. In every case, the challenge is the same: how do you keep the relevant context alive and accurate without being overwhelmed by the size and staleness of the full history?\n\nCSR solves it by making memory eviction asynchronous. MemCompiler solves it by compiling memory dynamically at each step rather than injecting it statically at episode start. WAM consistency work solves it by checking whether the model's imagined context is physically coherent. The temporal-logic swarm paper solves it by constraining LLM context with formal rules that don't decay. ACA solves it by concentrating data collection on the context that matters most.\n\n**The broader trend is the industrialization of embodied AI infrastructure.** We're past the 'can a robot do X?' phase for many tasks and deep into 'how do you build the pipelines, data formats, memory systems, and evaluation benchmarks that make reliable robot learning reproducible and scalable?' HumanNet, 123D, TAVIS, Bi3, and the laptop-refurbishing robustness tester are all infrastructure work. The field is quietly building the roads before the traffic arrives.\n\n**Looking forward:** the convergence of efficient hardware (CARMEN-style edge inference), smarter memory systems (CSR, MemCompiler), and large human-video corpora (HumanNet) suggests that capable, continuously operating robot policies running on modest onboard compute are closer than the headline GPU numbers might imply. The remaining hard problems are trust (position bias in reasoning models, Byzantine V2X attacks, coalition detection in multi-agent systems) and physical robustness (contact-rich manipulation, all-weather sensing). Expect the next 12 months to see more work at the intersection of formal verification and learned policies — the temporal-logic and Lyapunov-based papers today are early signals of that convergence."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Modular Lie Algebraic PDE Control of Multibody Flexible Manipulators",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "An Aerial Manipulator for Perception-Driven Flower Targeting Toward Contactless Pollination in Vertical Farming",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Bi3: A Biplatform, Bicultural, Biperson Dataset for Social Robot Navigation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Traffic Scenario Orchestration from Language via Constraint Satisfaction",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "AirBender: Adaptive Transportation of Bendable Objects Using Dual UAVs",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Intention assimilation control for accurate tracking with variable impedance in teleoperation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Dr-BA: Separable Optimization for Direct Radar Bundle Adjustment & Localization",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "PISTO: Proximal Inference for Stochastic Trajectory Optimization",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Palm-sized Omnidirectional Vision-Based UAV Exploration with Sparse Topological Map Guidance",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Variable Aerodynamic Damping via Co-Contraction: A Dynamic Isomorphism with Variable Stiffness Actuators",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "BioProVLA-Agent: An Affordable, Protocol-Driven, Vision-Enhanced VLA-Enabled Embodied Multi-Agent System",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "AT-VLA: Adaptive Tactile Injection for Enhanced Feedback Reaction in Vision-Language-Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CSR: Infinite-Horizon Real-Time Policies with Massive Cached State Representations",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Weather-Robust Scene Semantics with Vision-Aligned 4D Radar",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "MORPH-U: Multi-Objective Resilient Motion Planning for V2X-Enabled Autonomous Driving",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Escaping the Diversity Trap in Robotic Manipulation via Anchor-Centric Adaptation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "PathPainter: Transferring the Generalization Ability of Image Generation Models to Embodied Navigation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Is the Future Compatible? Diagnosing Dynamic Consistency in World Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "How to utilize failure demo data?: Effective data selection for imitation learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "MemCompiler: Compile, Don't Inject -- State-Conditioned Memory for Embodied Agents",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "BrickCraft: Visuomotor Skill Composition with Situated Manual Guidance for Long-Horizon Interlocking Brick Assembly",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "PhySPRING: Structure-Preserving Reduction of Physics-Informed Twins via GNN",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CommandSwarm: Safety-Aware Natural Language-to-Behavior-Tree Generation for Robotic Swarms",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "NoiseGate: Learning Per-Latent Timestep Schedules as Information Gating in World Action Models",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Melding LLM and temporal logic for reliable human-swarm collaboration in complex scenarios",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "AERO-VIS: Asynchronous Event-based Real-time Onboard Visual-Inertial SLAM",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "TAVIS: A Benchmark for Egocentric Active Vision and Anticipatory Gaze in Imitation Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Evaluation of an Actuated Spine in Agile Quadruped Locomotion",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "Active Embodiment Identification with Reinforcement Learning for Legged Robots",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "123D: Unifying Multi-Modal Autonomous Driving Data at Scale",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "HumanNet: Scaling Human-centric Video Learning to One Million Hours",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "CARMEN: CORDIC-Accelerated Resource-Efficient Multi-Precision Inference Engine for Deep Learning",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "GraphDC: A Divide-and-Conquer Multi-Agent System for Scalable Graph Algorithm Reasoning",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "More Thinking, More Bias: Length-Driven Position Bias in Reasoning Models",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Hidden Coalitions in Multi-Agent AI: A Spectral Diagnostic from Internal Representations",
+          "author": "arXiv cs.AI",
+          "year": 2026
+        },
+        {
+          "title": "Learning Material-Aware Hamiltonian Risk Fields for Safe Navigation",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        },
+        {
+          "title": "The Cost of Consensus: Malignant Epistemic Herding and Adaptive Gating in Distributed Multi-Agent Search",
+          "author": "arXiv cs.RO",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-05-10",
       "date": "Sunday, May 10, 2026",
