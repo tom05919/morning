@@ -1,7 +1,167 @@
 {
-  "version": 17,
-  "generatedAt": "2026-05-11T12:00:00Z",
+  "version": 18,
+  "generatedAt": "2026-05-12T12:00:00Z",
   "reports": [
+    {
+      "id": "2026-05-12",
+      "date": "Tuesday, May 12, 2026",
+      "shortDate": "May 12",
+      "title": "Robots That Learn From Failure, Think Faster, and Stay Safe",
+      "topics": [
+        "Robotics",
+        "VLA Models",
+        "Inference Efficiency",
+        "Robot Learning",
+        "LLM Systems",
+        "Safety & Security"
+      ],
+      "readTime": 14,
+      "tldr": "A dense day in robotics and embodied AI research. The dominant themes are (1) making Vision-Language-Action (VLA) models more robust — through failure-aware training, asynchronous inference fixes, and fine-tuning without forgetting — and (2) speeding up robot policy inference with flow-matching and self-consistency tricks. On the safety front, researchers are probing both backdoor vulnerabilities in robot models and better formal guarantees for robot governance. Several papers also push the hybrid physics-plus-learning approach across vehicles, continuum robots, and quadrupeds.",
+      "sections": [
+        {
+          "heading": "The VLA Problem Nobody Was Comparing Fairly — Until Now",
+          "body": "Vision-Language-Action (VLA) models are large neural networks that take in visual observations and language instructions and output robot actions. They are attractive because one model can, in principle, handle many different tasks. But they have a practical headache: they are slow. Generating an action takes compute time, and by the time the action is ready to execute, the robot has moved and the world has changed. This 'observation staleness' problem has spawned four competing fixes — inference-time inpainting (IT-RTC), training-time delay simulation (TT-RTC), future-state-aware conditioning (VLASH), and lightweight residual correction (A2C2) — but until today nobody had compared them under the same conditions.\n\nA new paper from arXiv (2605.08168) does exactly that, building two unified test beds and sweeping delays up to 20 control steps. The headline result: A2C2's per-step residual correction wins overall, staying above 90% task success up to 8-step delays and leading at longer delays too. TT-RTC is the most 'safe' choice if you want predictability — it adds zero extra inference cost and generalises beyond the delay range it was trained on. IT-RTC is competitive when delays are short but falls apart with long action chunks. VLASH shows a clean trade-off controlled by the delay range used during fine-tuning. This kind of head-to-head benchmark is exactly what the field needs before anyone confidently picks a method for production."
+        },
+        {
+          "heading": "Teaching Robots to Learn From Failure, Not Just Success",
+          "body": "Most robot learning today uses 'behavioural cloning' — you show the robot lots of successful demonstrations and it learns to imitate them. The problem is that it has never seen things go wrong, so when they inevitably do, it has no idea how to recover.\n\nTwo papers attack this from different angles. AFIL (2605.08434) — Adaptive Failure-Informed Learning — proposes running a pretrained VLA to intentionally generate failure rollouts, then training two parallel action generators: one that learns what success looks like and one that learns what failure looks like. During real execution, the failure generator acts as a repeller, steering the robot away from failure-prone moves. Crucially, the guidance strength scales with how different the success and failure distributions are at each diffusion step, so it only pushes hard when it matters.\n\nRePO-VLA (2605.09410) takes a complementary approach, assigning distinct roles to three types of trajectories: success, recovery (where the robot was drifting but corrected itself), and outright failure. It also learns a 'progress-aware value function' — essentially a measure of how far along a task the robot is — to distinguish between a robot that is nominally executing but stalling versus one making real headway. At test time, conditioning on a high progress value biases actions toward the learned success manifold without needing an explicit failure detector. The adversarial success rate on their benchmark climbs from 20% to 75% on average.\n\nBoth papers send the same message: failure trajectories are data, not waste."
+        },
+        {
+          "heading": "Faster Robot Policies Without Sacrificing Physical Consistency",
+          "body": "Diffusion-based robot policies — which work by iteratively denoising a random signal into a concrete action — are accurate but slow. Two papers this week push toward faster, cleaner inference.\n\nElasticFlow (2605.08799) proposes a 'one-step' policy: instead of denoising over many iterations, it directly predicts the average velocity field from noise to action in a single pass. The key insight it adds is an 'Elastic Time Horizons' mechanism that explicitly tells the model how fine-grained its control needs to be — semantic instructions like 'pick up the cup' need different temporal resolution than 'tighten the screw.' The result runs at roughly 71 Hz (Hz means cycles per second — a typical control loop runs at 10-30 Hz, so 71 Hz is fast) and beats strong baselines including OpenVLA and π₀ on long-horizon tasks.\n\nTrajectory-Consistent Flow Matching (2605.08511) takes a complementary approach, keeping multi-step inference but closing a fundamental training-versus-inference gap. Standard flow matching trains by minimising a local velocity error, but at test time you have to integrate that velocity over time — small local errors compound. The paper adds four complementary fixes: trajectory-level consistency supervision, velocity field smoothness regularisation, fourth-order Runge-Kutta integration (a numerical method that is far more accurate than the default first-order Euler method), and a dual-view 3D point cloud encoder. On two difficult long-horizon real-robot tasks, both baselines score 0% and this method scores 60-70%.\n\nA third inference trick is KeyStone (2605.08638), which exploits an underappreciated property of action spaces: Euclidean distance between action sequences has a physical meaning (it corresponds to physical similarity of motion). That is not true for text tokens or image pixels. KeyStone samples K candidate action chunks in parallel, clusters them, and returns the medoid — the most central member — of the biggest cluster. Because diffusion inference is memory-bandwidth-limited rather than compute-limited, those K parallel chains fit in the spare capacity with negligible added latency. Success rates improve by up to 13.3 percentage points with essentially no time cost."
+        },
+        {
+          "heading": "Fine-Tuning Without Forgetting: ConSFT",
+          "body": "When you take a large pretrained VLA and fine-tune it on a specific task, it tends to overwrite its general skills — a phenomenon called catastrophic forgetting. Existing solutions like experience replay (mixing in old training data) are expensive.\n\nConSFT (2605.08879) — Conservative Supervised Fine-Tuning — tackles this by dynamically scaling the learning signal based on model confidence. When the model is already confident about a sample, the gradient update is suppressed, preventing unnecessary parameter churn. The intuition is borrowed from reinforcement learning's 'trust-region' methods, which prevent policy updates from swinging too far. ConSFT requires no old data and no separate reference network to compare against. Tested on π₀, π₀.₅, and GR00T-N1.6-3B, it beats vanilla fine-tuning by an average of 20 percentage points in capability retention and matches data-heavy experience replay while being far cheaper."
+        },
+        {
+          "heading": "Physics + Learning: A Consistent Winner Across Domains",
+          "body": "Several papers reinforce a pattern that keeps appearing: purely learned models and purely physics-based models each have weaknesses, but hybrid approaches combining physical structure with learned components consistently outperform both.\n\nLE-PAVD (2605.08489) does this for autonomous racing, adding physics-grounded components (load-sensitive tyre forces, longitudinal load transfer, actuator rate limits) to a neural dynamics model. It reduces position prediction error by 16-20%, nearly eliminates yaw-rate error (91% reduction), uses 22% fewer floating-point operations, and runs 1.5× faster than a pure neural baseline.\n\nDiff-CAST (2605.08804) applies the same philosophy to quadruped locomotion. Standard GAN-based motion discriminators — the component that tells the robot whether its motion looks natural — suffer from mode collapse (they fixate on a few motion patterns and ignore the rest). Replacing the GAN with a diffusion-based prior gives the system a richer sense of natural motion distributions, enabling smoother transitions between diverse skills on real hardware.\n\nFor continuum robots — flexible snake-like robots used in surgery and inspection — a new paper (2605.09216) learns to predict the robot's full 3D shape from motor commands alone using flow matching conditioned on actuation state. This replaces complex mechanical models that are hard to derive and sensitive to manufacturing variation."
+        },
+        {
+          "heading": "Security: Backdoors in Robot Brains",
+          "body": "As VLA models become infrastructure — deployed in warehouses and hospitals and homes — their security matters. Two papers this week address backdoor attacks, where an adversary secretly corrupts a model during training so it behaves normally under most conditions but misbehaves when it sees a specific trigger.\n\nATAAT (2605.08612) uncovers a core reason why existing backdoor attacks on VLAs often fail: 'Gradient Interference,' where the conflicting objectives of normal task performance and trigger-conditioned misbehaviour create gradients that cancel each other out during end-to-end training. ATAAT solves this with an 'adaptive gradient decoupling' strategy that selects the right separation approach based on what capabilities the adversary controls. With only 5% of training data poisoned, it achieves over 80% targeted attack success while remaining visually stealthy.\n\nOn the defensive side, GuardVLA (2605.09005) proposes using backdoors constructively — as ownership watermarks. A model owner embeds a secret trigger during training. After release, if someone fine-tunes and redistributes the model, the owner can verify ownership by activating the hidden backdoor through a 'swap-and-detect' mechanism. The watermark survives post-release adaptation across multiple tested settings.\n\nTogether these papers highlight a cat-and-mouse dynamic that will only intensify as VLAs become more commercially valuable."
+        },
+        {
+          "heading": "LLM Internals: Where Reliability Actually Lives",
+          "body": "A careful mechanistic study (2605.08200) challenges a widespread assumption about vision-language models: that sharp, concentrated attention maps indicate a trustworthy answer. Testing three open-weight VLM families (LLaVA-1.5, PaliGemma, Qwen2-VL) with a unified probing pipeline, the paper finds that attention structure is an essentially zero predictor of correctness (the correlation coefficient is 0.001, statistically indistinguishable from zero). Yet attention is causally necessary — masking the top 30% of image patches drops accuracy by 8-11 percentage points.\n\nWhat does predict reliability? Hidden-state geometry. A simple linear probe applied to the internal representations of the model achieves AUROC (Area Under the Receiver Operating Characteristic curve — a measure of how well a binary classifier performs, where 1.0 is perfect and 0.5 is random) above 0.95 on two of three model families. The architectural type matters too: late-fusion models (like LLaVA, which processes vision and language separately until late layers) concentrate reliability in a fragile narrow bottleneck, while early-fusion models (PaliGemma, Qwen2-VL) distribute it widely and are far more robust to ablation. The practical implication for anyone building reliability monitors on top of VLMs: read the hidden states, not the attention maps."
+        },
+        {
+          "heading": "Capability Elicitation vs. Creation in Post-Training",
+          "body": "A conceptual paper (2605.08368) offers a useful framework for a debate that often generates more heat than light: does fine-tuning with reinforcement learning (RL) truly create new capabilities, or does it just surface capabilities the base model already had?\n\nThe authors draw a distinction between 'capability elicitation' (reweighting behaviors within the model's existing reachable set) and 'capability creation' (expanding that reachable set itself). They argue that both supervised fine-tuning (SFT) and RL can do either, and the key variable is not the training signal type but whether the update stays close to the base model's distribution. When it does, the main effect is local reweighting — elicitation, not creation. This reframes questions like 'can RL teach a model to reason?' into a more tractable empirical question: does the training procedure push the model into genuinely new behavioral territory, or does it just make already-reachable behaviors more accessible?"
+        },
+        {
+          "heading": "Notable Shorts",
+          "body": "A few other papers worth flagging:\n\n• BEACON (2605.08571) addresses a practical data problem: you have abundant training demos from a source domain (say, simulation) and few from your target domain (say, a specific real robot). BEACON learns per-sample weights for the source data that minimise an upper bound on target-domain generalisation error, improving on fixed-ratio mixing baselines.\n\n• Latent Geometry / GC-IDM (2605.08732): If a world model's latent space is sufficiently smooth and uniform, you can replace expensive iterative planning (trying many action sequences and picking the best) with a lightweight feed-forward network that maps current state + goal to next action directly. Across four benchmarks this matches or beats standard planning methods while cutting decision-time cost by 100-130×.\n\n• REAP (2605.08713) trains an end-to-end reinforcement learning parking agent in a photorealistic simulator built from 3D Gaussian Splatting — a technique that turns real-world photos into a 3D neural scene — then deploys it directly to a physical car, including in extremely tight mechanical parking slots.\n\n• IMPACT (2605.09127) achieves 2.9×–70× speedups (geometric mean 13.8×) on contact-implicit trajectory optimisation, which is the mathematical problem of planning robot motions that involve making and breaking contact with objects without specifying in advance when and where contact happens."
+        },
+        {
+          "heading": "The Common Thread — and Where This Is All Heading",
+          "body": "At first glance today's papers span an enormous range: drone control, capsule endoscopy, warehouse robots, autonomous racing, quadruped locomotion, LLM internals, parking. But there is a single unifying tension running through almost all of them: the gap between training and deployment.\n\nEvery paper is, in some sense, trying to close a gap between what a model or robot learned and what it actually needs to do when released into the world. VLA async inference papers close the gap between offline training (where observations are always fresh) and real-time control (where they are not). AFIL and RePO-VLA close the gap between success-only training data and the failure-filled real world. ConSFT closes the gap between general pretraining and specialised fine-tuning without losing either. ElasticFlow and Trajectory-Consistent Flow Matching close the gap between training-time objectives and test-time integration errors. The VLM reliability paper closes the gap between the proxy metric everyone uses (attention sharpness) and the thing that actually matters (hidden-state correctness signals). The LE-PAVD racing paper closes the gap between simplified physics models and real tyre dynamics.\n\nThis convergence is not coincidence. It reflects a maturing field that has moved past 'can we train a model that works in the lab?' and is now grappling seriously with 'why does it break in the real world, and how do we fix that systematically?'\n\nThe near-term trend is clear: expect the hybrid physics-plus-learning approach to become the dominant paradigm for anything with hard physical constraints (vehicles, legged robots, surgical tools). Expect failure-aware and recovery-aware training to become standard practice for manipulation, just as data augmentation became standard in vision. And expect inference-time self-consistency tricks — sampling multiple candidates and selecting the most central one — to spread from language models into action models broadly.\n\nThe longer-horizon signal is subtler but important: as VLAs become infrastructure, the security and governance papers (ATAAT, GuardVLA, RoSO/SMGI) hint at an emerging sub-field of 'robot model security' that will likely be as consequential as model alignment is for language models."
+        }
+      ],
+      "sources": [
+        {
+          "title": "Understanding Asynchronous Inference Methods for Vision-Language-Action Models",
+          "author": "arXiv:2605.08168",
+          "year": 2026
+        },
+        {
+          "title": "Failing Forward: Adaptive Failure-Informed Learning for Vision-Language-Action Models",
+          "author": "arXiv:2605.08434",
+          "year": 2026
+        },
+        {
+          "title": "RePO-VLA: Recovery-Driven Policy Optimization for Vision-Language-Action Models",
+          "author": "arXiv:2605.09410",
+          "year": 2026
+        },
+        {
+          "title": "ElasticFlow: One-Step Physics-Consistent Policy with Elastic Time Horizons",
+          "author": "arXiv:2605.08799",
+          "year": 2026
+        },
+        {
+          "title": "Trajectory-Consistent Flow Matching for Robust Visuomotor Policy Learning",
+          "author": "arXiv:2605.08511",
+          "year": 2026
+        },
+        {
+          "title": "Geometry Guided Self-Consistency for Physical AI",
+          "author": "arXiv:2605.08638",
+          "year": 2026
+        },
+        {
+          "title": "Preserving Foundational Capabilities in Flow-Matching VLAs through Conservative SFT",
+          "author": "arXiv:2605.08879",
+          "year": 2026
+        },
+        {
+          "title": "LE-PAVD: Learning-Enhanced Physics-Aware Vehicle Dynamics for High-Speed Autonomous Navigation",
+          "author": "arXiv:2605.08489",
+          "year": 2026
+        },
+        {
+          "title": "Constraint-Aware Diffusion Priors for High-Fidelity and Versatile Quadruped Locomotion",
+          "author": "arXiv:2605.08804",
+          "year": 2026
+        },
+        {
+          "title": "Continuum Robot Modeling with Action Conditioned Flow Matching",
+          "author": "arXiv:2605.09216",
+          "year": 2026
+        },
+        {
+          "title": "ATAAT: Adaptive Threat-Aware Adversarial Tuning Framework against Backdoor Attacks on Vision-Language-Action Models",
+          "author": "arXiv:2605.08612",
+          "year": 2026
+        },
+        {
+          "title": "Towards Backdoor-Based Ownership Verification for Vision-Language-Action Models",
+          "author": "arXiv:2605.09005",
+          "year": 2026
+        },
+        {
+          "title": "Where Reliability Lives in Vision-Language Models: A Mechanistic Study of Attention, Hidden States, and Causal Circuits",
+          "author": "arXiv:2605.08200",
+          "year": 2026
+        },
+        {
+          "title": "On Distinguishing Capability Elicitation from Capability Creation in Post-Training: A Free-Energy Perspective",
+          "author": "arXiv:2605.08368",
+          "year": 2026
+        },
+        {
+          "title": "BEACON: Cross-Domain Co-Training of Generative Robot Policies via Best-Effort Adaptation",
+          "author": "arXiv:2605.08571",
+          "year": 2026
+        },
+        {
+          "title": "Latent Geometry Beyond Search: Amortizing Planning in World Models",
+          "author": "arXiv:2605.08732",
+          "year": 2026
+        },
+        {
+          "title": "REAP: Reinforcement-Learning End-to-End Autonomous Parking with Gaussian Splatting Simulator for Real2Sim2Real Transfer",
+          "author": "arXiv:2605.08713",
+          "year": 2026
+        },
+        {
+          "title": "IMPACT: An Implicit Active-Set Augmented Lagrangian for Fast Contact-Implicit Trajectory Optimization",
+          "author": "arXiv:2605.09127",
+          "year": 2026
+        },
+        {
+          "title": "ProcVLM: Learning Procedure-Grounded Progress Rewards for Robotic Manipulation",
+          "author": "arXiv:2605.08774",
+          "year": 2026
+        },
+        {
+          "title": "From Ontology Conformance to Admissible Reconfiguration: A RoSO/SMGI Adequacy Argument for Robotic Service Governance",
+          "author": "arXiv:2605.08185",
+          "year": 2026
+        }
+      ]
+    },
     {
       "id": "2026-05-11",
       "date": "Monday, May 11, 2026",
